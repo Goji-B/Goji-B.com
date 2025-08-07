@@ -7,12 +7,11 @@ let gameActive = true;
 let gameState = Array(9).fill("");
 
 const winCombos = [
-  [0,1,2], [3,4,5], [6,7,8],  // rows
-  [0,3,6], [1,4,7], [2,5,8],  // cols
-  [0,4,8], [2,4,6]            // diagonals
+  [0,1,2], [3,4,5], [6,7,8],
+  [0,3,6], [1,4,7], [2,5,8],
+  [0,4,8], [2,4,6]
 ];
 
-// Create 9 tiles
 for (let i = 0; i < 9; i++) {
   const tile = document.createElement('div');
   tile.classList.add('tile');
@@ -22,7 +21,6 @@ for (let i = 0; i < 9; i++) {
 
 function handleClick(e) {
   const index = e.target.dataset.index;
-
   if (!gameActive || gameState[index] !== "") return;
 
   gameState[index] = currentPlayer;
