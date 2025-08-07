@@ -1,26 +1,4 @@
-body {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(to right, #ff9a9e, #fad0c4, #fad0c4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  height: 100vh;
-  margin: 0;
-  padding: 40px 20px;
-}
 
-h1 {
-  color: #fff;
-  text-shadow: 2px 2px 6px #333;
-}
-
-#status {
-  margin: 20px;
-  font-size: 1.2rem;
-  color: #333;
-  font-weight: bold;
-}
 
 .game-board {
   display: grid;
