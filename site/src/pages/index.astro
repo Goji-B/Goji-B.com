@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activities</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #fff5d6 0%, #efffe7 100%);
+      }
+      .wrap {
+        padding-top: 0.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+      }
+      .activities-btn {
+        display: inline-block;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 2.2rem;
+        color: #0f2b19;
+        background: #8ccf5a;
+        border: 2px solid #6eb33f;
+        border-radius: 999px;
+        padding: 1.25rem 3.2rem;
+      }
+      .logo {
+        width: min(640px, 92vw);
+        height: auto;
+      }
+      @media (max-width: 768px) {
+        .activities-btn {
+          font-size: 1.55rem;
+          padding: 1.05rem 2.1rem;
+        }
+        .logo { width: min(560px, 94vw); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <a class="activities-btn" href="/activities/">Activities</a>
+      <img class="logo" src="/gojiberry-banner-split.png" alt="Gojiberry banner" />
+    </div>
+  </body>
+</html>

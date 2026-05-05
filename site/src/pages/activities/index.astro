@@ -1,0 +1,36 @@
+---
+import ActivityLayout from '../../layouts/ActivityLayout.astro';
+import ActivitiesHubGrid from '../../components/activities/ActivitiesHubGrid.astro';
+---
+
+<ActivityLayout title="Activities World">
+  <div class="top-row">
+    <a class="home-btn" href="/">Home</a>
+  </div>
+  <h1>Activities World</h1>
+  <p>Pick an activity and play together.</p>
+  <ActivitiesHubGrid />
+
+  <style>
+    .top-row {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 0.35rem;
+    }
+
+    .home-btn {
+      text-decoration: none;
+      font-weight: 700;
+      color: #ffffff;
+      background: #2f6f4e;
+      border: 2px solid #1f4d35;
+      border-radius: 999px;
+      padding: 0.45rem 0.95rem;
+    }
+
+    h1,
+    p {
+      text-align: center;
+    }
+  </style>
+</ActivityLayout>

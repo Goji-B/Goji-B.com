@@ -1,20 +1,6 @@
 ---
-title: Gojiberry Landing (Starlight)
-description: Investor-first landing for Gojiberry electronics modules and Zephyr sample portfolio.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
-hero:
-  tagline: Gojiberry electronics by Goji-B with production-grade Zephyr RTOS sample implementations.
-  actions:
-    - text: Company Overview
-      link: /company/
-      icon: right-arrow
-    - text: Module Catalog
-      link: /modules/
-      icon: right-arrow
-    - text: Play Tic-Tac-Toe
-      link: /games/tic-tac-toe/
-      icon: right-arrow
-      variant: minimal
+title: Home
+description: Games-first landing.
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
@@ -22,19 +8,19 @@ import GamesBlob from '../../components/GamesBlob.astro';
 
 <GamesBlob />
 
-## What we are building
+## Welcome
 
 <CardGrid stagger>
-	<Card title="Investor-ready narrative" icon="star">
-		Clear company story, module roadmap, and technical proof points.
+	<Card title="Games World" icon="star">
+		Enter a colorful games area built for ages 3-8.
 	</Card>
-	<Card title="Module-first structure" icon="seti:json">
-		10-15 modules in phase one, each with practical use-case framing.
+	<Card title="Easy Play" icon="seti:json">
+		Big game cards, simple actions, and clear feedback.
 	</Card>
-	<Card title="Zephyr sample quality" icon="open-book">
-		Each module targets three complete Zephyr samples, linked to source repos.
+	<Card title="Kid-friendly flow" icon="open-book">
+		Every game page includes a Back button to return to game selection.
 	</Card>
-	<Card title="Cutover-safe delivery" icon="check">
-		Build and deploy through `site/` using GitHub Actions + GitHub Pages.
+	<Card title="Mobile first" icon="check">
+		On phones, Games stays the top priority action.
 	</Card>
 </CardGrid>

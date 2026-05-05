@@ -1,6 +1,5 @@
 <section class="game-wrap" data-tictactoe>
   <h2>Tic-Tac-Toe</h2>
-  <p class="subtitle">A quick family game, now inside the main Goji-B site.</p>
 
   <div class="game-board" data-board>
     <button class="tile" data-index="0" type="button" aria-label="Tile 1"></button>
@@ -84,10 +83,9 @@
       currentPlayer = "X";
       gameActive = true;
       status.textContent = "Player X's turn";
-
       Array.from(board.children).forEach((tile) => {
         tile.textContent = "";
-        tile.className = "tile";
+        tile.classList.remove("x", "o", "winner");
       });
     }
 
@@ -106,6 +104,8 @@
     padding: 24px;
     background: linear-gradient(to right, #eaf6ef, #f4fbf7);
     max-width: 380px;
+    margin: 0 auto;
+    text-align: center;
   }
 
   .subtitle {
@@ -121,11 +121,14 @@
   }
 
   .tile {
+    all: unset;
+    box-sizing: border-box;
     width: 100px;
     height: 100px;
     background-color: #ffffff;
     border: 2px solid #2f6f4e;
     border-radius: 12px;
+    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;

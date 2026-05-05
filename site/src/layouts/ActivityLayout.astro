@@ -1,0 +1,56 @@
+---
+const { title = "Activity" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #fff5d6 0%, #efffe7 100%);
+        color: #1c2a1f;
+      }
+
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0.45rem 1rem 1.25rem;
+      }
+
+      .logo-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 0.1rem 0 0.35rem;
+      }
+
+      .logo {
+        width: min(560px, 92vw);
+        height: auto;
+      }
+
+      h1 {
+        margin: 0.15rem 0 0.3rem;
+        text-align: center;
+        font-size: 1.9rem;
+      }
+
+      p {
+        margin: 0 0 0.8rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="logo-wrap">
+        <img class="logo" src="/gojiberry-banner-split.png" alt="Gojiberry banner" />
+      </div>
+      <slot />
+    </main>
+  </body>
+</html>

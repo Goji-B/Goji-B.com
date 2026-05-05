@@ -1,8 +1,11 @@
 <section class="game" data-bubble-root>
   <h2>Bubble Pop ABC</h2>
-  <p>Pop the bubbles in A -> B -> C order.</p>
+  <p data-stage>Pop the bubbles in order.</p>
   <div class="row" data-row></div>
   <p data-msg></p>
+  <p class="next-wrap" data-next-wrap hidden>
+    <button class="next-btn" data-next type="button">Next</button>
+  </p>
 </section>
 
 <script>
@@ -12,32 +15,113 @@
     root.dataset.init = '1';
     const row = root.querySelector('[data-row]');
     const msg = root.querySelector('[data-msg]');
-    const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
-    let target = 0;
-    letters.sort(() => Math.random() - 0.5).forEach((l) => {
-      const b = document.createElement('button');
-      b.textContent = l;
-      b.className = 'bubble';
-      b.addEventListener('click', () => {
-        if (l === ['A', 'B', 'C', 'D', 'E', 'F'][target]) {
-          b.disabled = true;
-          b.classList.add('ok');
-          target += 1;
-          msg.textContent = target === 6 ? 'Awesome! All letters popped.' : '';
-        } else {
-          msg.textContent = 'Try the next letter in order.';
-        }
+    const stageText = root.querySelector('[data-stage]');
+    const nextWrap = root.querySelector('[data-next-wrap]');
+    const nextBtn = root.querySelector('[data-next]');
+
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const stageSize = 6;
+    let stageStart = 0;
+
+    function renderStage() {
+      const current = alphabet.slice(stageStart, stageStart + stageSize);
+      const ordered = [...current];
+      const shuffled = [...current].sort(() => Math.random() - 0.5);
+      let target = 0;
+      row.innerHTML = '';
+      msg.textContent = '';
+      nextWrap.hidden = true;
+      stageText.textContent = `Pop letters in order: ${ordered[0]} to ${ordered[ordered.length - 1]}`;
+
+      shuffled.forEach((l) => {
+        const b = document.createElement('button');
+        b.textContent = l;
+        b.className = 'bubble';
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (l === ordered[target]) {
+            b.disabled = true;
+            b.classList.add('ok');
+            target += 1;
+            msg.textContent = '';
+            if (target === ordered.length) {
+              if (ordered[ordered.length - 1] === 'Z') {
+                msg.textContent = 'Amazing! You reached Z.';
+                nextBtn.textContent = 'Play Again';
+                nextWrap.hidden = false;
+              } else {
+                msg.textContent = 'Great! Ready for the next letters.';
+                nextBtn.textContent = 'Next';
+                nextWrap.hidden = false;
+              }
+            }
+          } else {
+            msg.textContent = `Try ${ordered[target]} next.`;
+          }
+        });
+        row.appendChild(b);
       });
-      row.appendChild(b);
+    }
+
+    nextBtn.addEventListener('click', () => {
+      stageStart += stageSize;
+      if (stageStart >= alphabet.length) stageStart = 0;
+      renderStage();
     });
+
+    renderStage();
   }
   initBubble();
   document.addEventListener('astro:page-load', initBubble);
 </script>
 
 <style>
-  .game { background:#eff7ff; padding:1rem; border-radius:14px; border:2px solid #2b5f9e; color:#10263f; }
-  .row { display:flex; flex-wrap:wrap; gap:.6rem; }
-  .bubble { width:64px; height:64px; border-radius:50%; border:2px solid #2b5f9e; background:#cfe9ff; font-weight:800; color:#10263f; }
-  .bubble.ok { opacity:.5; }
+  .game {
+    background:#eff7ff;
+    padding:1rem;
+    border-radius:14px;
+    border:2px solid #2b5f9e;
+    color:#10263f;
+    text-align: center;
+  }
+  .row {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(88px, 1fr));
+    gap:.8rem;
+    max-width: 380px;
+    margin: 0.8rem auto 0.6rem;
+  }
+  :global(.bubble) {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius:50%;
+    border:2px solid #2b5f9e;
+    background:#cfe9ff;
+    font-weight:800;
+    font-size: clamp(2rem, 7vw, 3rem);
+    color:#10263f;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    line-height: 1;
+  }
+  :global(.bubble.ok) {
+    opacity: 1;
+    background: #7be08e;
+    border-color: #24763b;
+    color: #10361c;
+  }
+  .next-wrap { margin-top: .6rem; }
+  .next-btn {
+    border: 2px solid #2f6f4e;
+    background: #2f6f4e;
+    color: #fff;
+    border-radius: 999px;
+    padding: .55rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
 </style>

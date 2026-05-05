@@ -1,0 +1,14 @@
+:root {
+  --sl-color-bg: #fff7e8;
+  --sl-color-bg-nav: #ffeec9;
+  --sl-color-bg-sidebar: #fff1d8;
+  --sl-color-text: #2a1b0f;
+  --sl-color-accent: #2f6f4e;
+  --sl-color-accent-high: #23553b;
+}
+
+main {
+  background: linear-gradient(180deg, #fff7e8 0%, #f4ffe9 100%);
+  border-radius: 16px;
+  padding: 0.5rem;
+}

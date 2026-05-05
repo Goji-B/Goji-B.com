@@ -8,34 +8,22 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Goji-B',
+			customCss: ['./src/styles/site-theme.css'],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Goji-B/Goji-B.com' }],
 			sidebar: [
 				{
-					label: 'Company',
+					label: 'Activities',
 					items: [
-						{ label: 'Overview', slug: 'company' },
-					],
-				},
-				{
-					label: 'Modules',
-					items: [
-						{ label: 'Module Catalog', slug: 'modules' },
-						{ label: 'Module Template', slug: 'modules/module-template' },
-					],
-				},
-				{
-					label: 'Games',
-					items: [
-						{ label: 'Games Home', slug: 'games' },
-						{ label: 'Tic-Tac-Toe', slug: 'games/tic-tac-toe' },
-						{ label: 'Color Match Tap', slug: 'games/color-match-tap' },
-						{ label: 'Animal Memory Cards', slug: 'games/animal-memory-cards' },
-						{ label: 'Bubble Pop ABC', slug: 'games/bubble-pop-abc' },
-						{ label: 'Shape Sorter', slug: 'games/shape-sorter' },
-						{ label: 'Count the Fruits', slug: 'games/count-the-fruits' },
-						{ label: 'Simon Lights Mini', slug: 'games/simon-lights-mini' },
-						{ label: 'Find the Odd One', slug: 'games/find-the-odd-one' },
-						{ label: 'Trace the Path', slug: 'games/trace-the-path' },
+						{ label: 'Activities Home', link: '/activities/' },
+						{ label: 'Tic-Tac-Toe Activity', link: '/activities/tic-tac-toe/' },
+						{ label: 'Color Match Tap Activity', link: '/activities/color-match-tap/' },
+						{ label: 'Animal Memory Cards Activity', link: '/activities/animal-memory-cards/' },
+						{ label: 'Bubble Pop ABC Activity', link: '/activities/bubble-pop-abc/' },
+						{ label: 'Shape Sorter Activity', link: '/activities/shape-sorter/' },
+						{ label: 'Count the Fruits Activity', link: '/activities/count-the-fruits/' },
+						{ label: 'Simon Lights Mini Activity', link: '/activities/simon-lights-mini/' },
+						{ label: 'Find the Odd One Activity', link: '/activities/find-the-odd-one/' },
+						{ label: 'Trace the Path Activity', link: '/activities/trace-the-path/' },
 					],
 				},
 			],

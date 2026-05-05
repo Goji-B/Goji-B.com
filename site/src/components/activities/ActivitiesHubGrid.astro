@@ -1,0 +1,36 @@
+<div class="activities-grid">
+  <a class="activity-card" href="/activities/tic-tac-toe/">Tic-Tac-Toe</a>
+  <a class="activity-card" href="/activities/color-match-tap/">Color Match Tap</a>
+  <a class="activity-card" href="/activities/animal-memory-cards/">Animal Memory Cards</a>
+  <a class="activity-card" href="/activities/bubble-pop-abc/">Bubble Pop ABC</a>
+  <a class="activity-card" href="/activities/shape-sorter/">Shape Sorter</a>
+  <a class="activity-card" href="/activities/count-the-fruits/">Count the Fruits</a>
+  <a class="activity-card" href="/activities/simon-lights-mini/">Simon Lights Mini</a>
+  <a class="activity-card" href="/activities/find-the-odd-one/">Find the Odd One</a>
+  <a class="activity-card" href="/activities/trace-the-path/">Trace the Path</a>
+</div>
+
+<style>
+  .activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .activity-card {
+    text-decoration: none;
+    color: #102030;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-align: center;
+    padding: 1rem 0.9rem;
+    border-radius: 16px;
+    border: 2px solid #2f6f4e;
+    background: linear-gradient(135deg, #ffe9a8, #b9f2b3);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14);
+  }
+  .activity-card:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #ffdcb8, #cdeeff);
+  }
+</style>

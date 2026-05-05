@@ -22,7 +22,7 @@
       colors.forEach((c) => {
         const b = document.createElement('button');
         b.textContent = c;
-        b.className = 'btn';
+        b.className = 'color-tile-btn';
         b.style.background = c.toLowerCase();
         b.addEventListener('click', () => {
           if (c === target) score += 1;
@@ -40,6 +40,32 @@
 
 <style>
   .game { padding: 1rem; border-radius: 14px; background: #e9fff0; border: 2px solid #2f6f4e; color: #153224; }
-  .row { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: .7rem; }
-  .btn { color: #fff; border: 2px solid #163; border-radius: 10px; padding: .9rem; font-weight: 700; text-shadow: 0 1px 1px rgba(0,0,0,.35); }
+  .row {
+    display: grid;
+    grid-template-columns: repeat(2, 100px);
+    justify-content: center;
+    gap: 12px;
+  }
+  :global(.color-tile-btn) {
+    all: unset;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px !important;
+    min-width: 100px !important;
+    max-width: 100px !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: 100px !important;
+    aspect-ratio: 1 / 1;
+    color: #fff;
+    border: 2px solid #2f6f4e;
+    border-radius: 12px;
+    padding: 0;
+    font-weight: 700;
+    font-size: 1rem;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .35);
+    cursor: pointer;
+  }
 </style>

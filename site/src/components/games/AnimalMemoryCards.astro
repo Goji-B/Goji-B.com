@@ -1,7 +1,10 @@
 <section class="game" data-memory-root>
   <h2>Animal Memory Cards</h2>
-  <p data-msg>Find all matching animal pairs.</p>
+  <p data-msg>Tap two cards. If they match, they stay open.</p>
   <div class="grid" data-grid></div>
+  <p class="reload-wrap" data-reload-wrap hidden>
+    <button class="reload-btn" data-reload type="button">Reload Activity</button>
+  </p>
 </section>
 
 <script>
@@ -11,31 +14,65 @@
     root.dataset.init = '1';
     const grid = root.querySelector('[data-grid]');
     const msg = root.querySelector('[data-msg]');
-    const animals = ['Cat', 'Dog', 'Fox', 'Owl', 'Cat', 'Dog', 'Fox', 'Owl'];
-    const cards = animals.sort(() => Math.random() - 0.5);
-    let first = null;
-    let lock = false;
-    let matched = 0;
-    cards.forEach((name) => {
-      const b = document.createElement('button');
-      b.className = 'card';
-      b.dataset.name = name;
-      b.textContent = '?';
-      b.addEventListener('click', () => {
-        if (lock || b.classList.contains('ok') || b === first) return;
-        b.textContent = name;
-        if (!first) { first = b; return; }
-        if (first.dataset.name === b.dataset.name) {
-          first.classList.add('ok'); b.classList.add('ok');
-          matched += 2; first = null;
-          if (matched === cards.length) msg.textContent = 'Great job! You matched all cards.';
-        } else {
-          lock = true;
-          setTimeout(() => { first.textContent = '?'; b.textContent = '?'; first = null; lock = false; }, 700);
-        }
+    const reloadWrap = root.querySelector('[data-reload-wrap]');
+    const reloadBtn = root.querySelector('[data-reload]');
+    const pool = ['🐱', '🐶', '🦊', '🦉', '🐼', '🐸', '🐵', '🐰', '🦁', '🐮', '🐧', '🐯'];
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function renderNewRound() {
+      msg.textContent = 'Tap two cards. If they match, they stay open.';
+      reloadWrap.hidden = true;
+      grid.innerHTML = '';
+
+      const selected = shuffle(pool).slice(0, 4);
+      const cards = shuffle([...selected, ...selected]); // 8 cards total
+      let first = null;
+      let lock = false;
+      let matched = 0;
+
+      cards.forEach((name) => {
+        const b = document.createElement('button');
+        b.className = 'memory-card';
+        b.dataset.name = name;
+        b.textContent = '❓';
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (lock || b.classList.contains('ok') || b === first) return;
+          b.textContent = name;
+          if (!first) { first = b; return; }
+          if (first.dataset.name === b.dataset.name) {
+            first.classList.add('ok');
+            b.classList.add('ok');
+            matched += 2;
+            first = null;
+            if (matched === cards.length) {
+              msg.textContent = 'Great job! You matched all cards.';
+              reloadWrap.hidden = false;
+            }
+          } else {
+            lock = true;
+            setTimeout(() => {
+              first.textContent = '❓';
+              b.textContent = '❓';
+              first = null;
+              lock = false;
+            }, 700);
+          }
+        });
+        grid.appendChild(b);
       });
-      grid.appendChild(b);
-    });
+    }
+
+    reloadBtn.addEventListener('click', renderNewRound);
+    renderNewRound();
   }
   initMemory();
   document.addEventListener('astro:page-load', initMemory);
@@ -43,7 +80,32 @@
 
 <style>
   .game { background:#fff9ef; padding:1rem; border-radius:14px; border:2px solid #805c2f; color:#2b1d0e; }
-  .grid { display:grid; grid-template-columns:repeat(4,minmax(70px,1fr)); gap:.6rem; }
-  .card { min-height:60px; border-radius:10px; border:2px solid #805c2f; background:#fff; font-weight:700; color:#2b1d0e; }
-  .card.ok { background:#d8f8d8; }
+  .grid { display:grid; grid-template-columns:repeat(4,78px); justify-content:center; gap:.6rem; }
+  :global(.memory-card) {
+    all: unset;
+    box-sizing: border-box;
+    width: 78px;
+    height: 78px;
+    border-radius: 12px;
+    border: 2px solid #805c2f;
+    background: #fff;
+    font-size: 4rem;
+    text-align: center;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  :global(.memory-card.ok) { background:#d8f8d8; }
+  .reload-wrap { margin-top: 1rem; text-align: center; }
+  .reload-btn {
+    border: 2px solid #2f6f4e;
+    background: #2f6f4e;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
 </style>

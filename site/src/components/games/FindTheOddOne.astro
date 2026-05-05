@@ -1,7 +1,10 @@
 <section class="game" data-odd-root>
   <h2>Find the Odd One</h2>
-  <p data-msg>Tap the one that is different.</p>
+  <p data-msg aria-live="polite">Tap the one that is different.</p>
   <div class="grid" data-grid></div>
+  <p class="reload-wrap" data-reload-wrap hidden>
+    <button class="reload-btn" data-reload type="button">Reload Activity</button>
+  </p>
 </section>
 
 <script>
@@ -11,25 +14,98 @@
     root.dataset.init = '1';
     const grid = root.querySelector('[data-grid]');
     const msg = root.querySelector('[data-msg]');
-    const same = '🐶';
-    const odd = '🐱';
-    const oddIndex = Math.floor(Math.random() * 9);
-    for (let i = 0; i < 9; i += 1) {
-      const b = document.createElement('button');
-      b.className = 'cell';
-      b.textContent = i === oddIndex ? odd : same;
-      b.addEventListener('click', () => {
-        msg.textContent = i === oddIndex ? 'You found it! Great eyes.' : 'Not this one. Try again!';
-      });
-      grid.appendChild(b);
+    const reloadWrap = root.querySelector('[data-reload-wrap]');
+    const reloadBtn = root.querySelector('[data-reload]');
+    const sets = [
+      ['🐶', '🐱'],
+      ['🍎', '🍐'],
+      ['⭐', '🌙'],
+      ['🦊', '🦝'],
+      ['🍊', '🍋'],
+      ['🐸', '🐢'],
+    ];
+
+    function renderRound() {
+      grid.innerHTML = '';
+      reloadWrap.hidden = true;
+      msg.textContent = 'Tap the one that is different.';
+      const picked = sets[Math.floor(Math.random() * sets.length)];
+      const same = picked[0];
+      const odd = picked[1];
+      const oddIndex = Math.floor(Math.random() * 9);
+
+      for (let i = 0; i < 9; i += 1) {
+        const b = document.createElement('button');
+        b.className = 'odd-cell';
+        b.type = 'button';
+        b.textContent = i === oddIndex ? odd : same;
+        b.addEventListener('click', () => {
+          if (i === oddIndex) {
+            b.classList.add('correct');
+            msg.textContent = 'You found it! Great eyes.';
+            reloadWrap.hidden = false;
+          } else {
+            b.classList.add('wrong');
+            msg.textContent = 'Not this one. Try again!';
+          }
+        });
+        grid.appendChild(b);
+      }
     }
+
+    reloadBtn.addEventListener('click', renderRound);
+    renderRound();
   }
   initOdd();
   document.addEventListener('astro:page-load', initOdd);
 </script>
 
 <style>
-  .game { background:#fffcee; padding:1rem; border-radius:14px; border:2px solid #806f2c; color:#2f2810; }
-  .grid { display:grid; grid-template-columns:repeat(3,70px); gap:.6rem; }
-  .cell { font-size:1.8rem; border-radius:10px; border:2px solid #806f2c; background:#fff; }
+  .game {
+    background:#fffcee;
+    padding:1rem;
+    border-radius:14px;
+    border:2px solid #806f2c;
+    color:#2f2810;
+    text-align: center;
+  }
+  .grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(90px, 1fr));
+    gap:.7rem;
+    max-width: 360px;
+    margin: .6rem auto 0;
+  }
+  :global(.odd-cell) {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    font-size: clamp(2.4rem, 9vw, 3.4rem);
+    border-radius:12px;
+    border:2px solid #806f2c;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    line-height: 1;
+  }
+  :global(.odd-cell.correct) {
+    background:#b9efc2;
+    border-color:#2a7f3d;
+  }
+  :global(.odd-cell.wrong) {
+    background:#ffe4c9;
+  }
+  .reload-wrap { margin-top: 0.85rem; }
+  .reload-btn {
+    border:2px solid #2f6f4e;
+    background:#2f6f4e;
+    color:#fff;
+    border-radius:999px;
+    padding:.55rem 1.1rem;
+    font-weight:700;
+    cursor:pointer;
+  }
 </style>

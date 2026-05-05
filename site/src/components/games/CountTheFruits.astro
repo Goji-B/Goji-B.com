@@ -1,9 +1,9 @@
 <section class="game" data-fruit-root>
   <h2>Count the Fruits</h2>
-  <p>How many apples do you see?</p>
+  <p data-question>How many fruits do you see?</p>
   <div class="fruits" data-fruits></div>
   <div class="answers" data-answers></div>
-  <p data-msg></p>
+  <p data-msg aria-live="polite"></p>
 </section>
 
 <script>
@@ -11,28 +11,94 @@
     const root = document.querySelector('[data-fruit-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    const question = root.querySelector('[data-question]');
     const fruits = root.querySelector('[data-fruits]');
     const answers = root.querySelector('[data-answers]');
     const msg = root.querySelector('[data-msg]');
-    const count = Math.floor(Math.random() * 5) + 3;
-    fruits.textContent = '🍎'.repeat(count);
-    [count - 1, count, count + 1].sort(() => Math.random() - 0.5).forEach((n) => {
-      const b = document.createElement('button');
-      b.className = 'ans';
-      b.textContent = String(n);
-      b.addEventListener('click', () => {
-        msg.textContent = n === count ? 'Correct! Nice counting.' : 'Try again!';
+    const fruitPool = [
+      { emoji: '🍎', name: 'apples' },
+      { emoji: '🍌', name: 'bananas' },
+      { emoji: '🍊', name: 'oranges' },
+      { emoji: '🍓', name: 'strawberries' },
+      { emoji: '🍇', name: 'grapes' },
+      { emoji: '🍐', name: 'pears' },
+    ];
+
+    function nextRound() {
+      const picked = fruitPool[Math.floor(Math.random() * fruitPool.length)];
+      const count = Math.floor(Math.random() * 6) + 3; // 3..8
+      question.textContent = `How many ${picked.name} do you see?`;
+      fruits.textContent = picked.emoji.repeat(count);
+      answers.innerHTML = '';
+      msg.textContent = '';
+
+      const options = [count - 1, count, count + 1]
+        .filter((n) => n > 0)
+        .sort(() => Math.random() - 0.5);
+
+      options.forEach((n) => {
+        const b = document.createElement('button');
+        b.className = 'fruit-ans';
+        b.type = 'button';
+        b.textContent = String(n);
+        b.addEventListener('click', () => {
+          if (n === count) {
+            msg.textContent = 'Correct! Next one...';
+            setTimeout(nextRound, 700);
+          } else {
+            msg.textContent = 'Try again!';
+          }
+        });
+        answers.appendChild(b);
       });
-      answers.appendChild(b);
-    });
+    }
+
+    nextRound();
   }
   initFruit();
   document.addEventListener('astro:page-load', initFruit);
 </script>
 
 <style>
-  .game { background:#fff4f4; padding:1rem; border-radius:14px; border:2px solid #b24040; color:#3f1111; }
-  .fruits { font-size:2rem; margin:.7rem 0; }
-  .answers { display:flex; gap:.6rem; }
-  .ans { padding:.5rem .9rem; border-radius:10px; border:2px solid #b24040; background:#fff; font-weight:700; color:#3f1111; }
+  .game {
+    background:#fff4f4;
+    padding:1rem;
+    border-radius:14px;
+    border:2px solid #b24040;
+    color:#3f1111;
+    text-align: center;
+  }
+  .fruits {
+    font-size: clamp(2.6rem, 10vw, 4rem);
+    margin:.8rem 0;
+    line-height: 1.15;
+  }
+  .answers {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(78px, 1fr));
+    gap:.7rem;
+    max-width: 420px;
+    margin: 0.4rem auto 0;
+  }
+  :global(.fruit-ans) {
+    all: unset;
+    box-sizing: border-box;
+    min-height: 82px;
+    border-radius:12px;
+    border:2px solid #b24040;
+    background:#fff;
+    font-weight:700;
+    font-size: clamp(1.7rem, 7vw, 2.3rem);
+    color:#3f1111;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+  }
+  [data-msg] {
+    min-height: 1.6em;
+    margin-top: .65rem;
+    font-size: clamp(1.05rem, 4.8vw, 1.35rem);
+    font-weight: 700;
+  }
 </style>

@@ -2,12 +2,11 @@
   <h2>Shape Sorter</h2>
   <p>Tap a shape, then tap the matching basket.</p>
   <div class="shape-row" data-shapes></div>
-  <div class="basket-row">
-    <button class="basket" data-basket="circle">Circle</button>
-    <button class="basket" data-basket="square">Square</button>
-    <button class="basket" data-basket="triangle">Triangle</button>
-  </div>
-  <p data-msg></p>
+  <div class="basket-row" data-baskets></div>
+  <p data-msg aria-live="polite"></p>
+  <p class="reload-wrap" data-reload-wrap hidden>
+    <button class="reload-btn" data-reload type="button">Reload Activity</button>
+  </p>
 </section>
 
 <script>
@@ -16,40 +15,161 @@
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
     const shapesWrap = root.querySelector('[data-shapes]');
+    const basketsWrap = root.querySelector('[data-baskets]');
     const msg = root.querySelector('[data-msg]');
-    const shapes = ['circle', 'square', 'triangle', 'circle', 'square'];
-    let selected = null;
-    shapes.forEach((s) => {
-      const b = document.createElement('button');
-      b.className = `shape ${s}`;
-      b.dataset.shape = s;
-      b.textContent = s === 'circle' ? '●' : s === 'square' ? '■' : '▲';
-      b.addEventListener('click', () => { selected = b; msg.textContent = `Selected ${s}`; });
-      shapesWrap.appendChild(b);
-    });
-    root.querySelectorAll('[data-basket]').forEach((basket) => {
-      basket.addEventListener('click', () => {
-        if (!selected) return;
-        if (selected.dataset.shape === basket.dataset.basket) {
-          selected.remove();
-          msg.textContent = 'Great match!';
-          selected = null;
-        } else {
-          msg.textContent = 'Oops, try another basket.';
-        }
+    const reloadWrap = root.querySelector('[data-reload-wrap]');
+    const reloadBtn = root.querySelector('[data-reload]');
+
+    const shapePool = [
+      { key: 'circle', label: 'Circle', symbol: '●' },
+      { key: 'square', label: 'Square', symbol: '■' },
+      { key: 'triangle', label: 'Triangle', symbol: '▲' },
+      { key: 'rectangle', label: 'Rectangle', symbol: '▬' },
+      { key: 'hexagon', label: 'Hexagon', symbol: '⬢' },
+      { key: 'pentagon', label: 'Pentagon', symbol: '⬟' },
+      { key: 'heptagon', label: '7-side', symbol: '7' },
+      { key: 'octagon', label: '8-side', symbol: '8' },
+    ];
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function renderRound() {
+      shapesWrap.innerHTML = '';
+      basketsWrap.innerHTML = '';
+      reloadWrap.hidden = true;
+      msg.textContent = '';
+      let selected = null;
+      let solved = 0;
+
+      const activeTypes = shuffle(shapePool).slice(0, 3);
+      const shapes = shuffle([...activeTypes, ...activeTypes]); // 6 boxes
+
+      shapes.forEach((shapeDef) => {
+        const b = document.createElement('button');
+        b.className = `shape ${shapeDef.key}`;
+        b.dataset.shape = shapeDef.key;
+        b.textContent = shapeDef.symbol;
+        b.type = 'button';
+        b.addEventListener('click', () => {
+          if (b.classList.contains('matched')) return;
+          selected = b;
+          msg.textContent = `Selected ${shapeDef.label}`;
+        });
+        shapesWrap.appendChild(b);
       });
-    });
+
+      activeTypes.forEach((shapeDef) => {
+        const basket = document.createElement('button');
+        basket.className = 'basket';
+        basket.dataset.basket = shapeDef.key;
+        basket.type = 'button';
+        basket.textContent = shapeDef.label;
+        basket.addEventListener('click', () => {
+          if (!selected) return;
+          if (selected.dataset.shape === basket.dataset.basket) {
+            selected.classList.add('matched');
+            selected.disabled = true;
+            solved += 1;
+            selected = null;
+            msg.textContent = 'Great match!';
+            if (solved === shapes.length) {
+              msg.textContent = 'Awesome! All shapes matched.';
+              reloadWrap.hidden = false;
+            }
+          } else {
+            msg.textContent = 'Oops, try another basket.';
+          }
+        });
+        basketsWrap.appendChild(basket);
+      });
+    }
+
+    reloadBtn.addEventListener('click', renderRound);
+    renderRound();
   }
   initShape();
   document.addEventListener('astro:page-load', initShape);
 </script>
 
 <style>
-  .game { background:#f5f0ff; padding:1rem; border-radius:14px; border:2px solid #6f4caf; color:#24153f; }
-  .shape-row, .basket-row { display:flex; gap:.6rem; flex-wrap:wrap; margin:.6rem 0; }
-  .shape { width:56px; height:56px; border:2px solid #364; background:#9bd6ff; color:#163; font-size:1.4rem; font-weight:800; }
-  .shape.circle { border-radius:50%; }
-  .shape.square { border-radius:8px; }
-  .shape.triangle { background:#ffa3a3; color:#631717; }
-  .basket { border:2px solid #bdaeff; background:#fff; border-radius:10px; padding:.5rem .8rem; }
+  .game {
+    background:#f5f0ff;
+    padding:1rem;
+    border-radius:14px;
+    border:2px solid #6f4caf;
+    color:#24153f;
+    text-align: center;
+  }
+  .shape-row, .basket-row {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(90px, 1fr));
+    gap:.8rem;
+    max-width: 420px;
+    margin:.8rem auto;
+    justify-content: center;
+  }
+  :global(.shape) {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border:2px solid #364;
+    background:#9bd6ff;
+    color:#163;
+    font-size: clamp(2.8rem, 11vw, 4rem);
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor: pointer;
+    border-radius: 14px;
+    line-height: 1;
+  }
+  :global(.shape.circle) { border-radius:50%; }
+  :global(.shape.square) { border-radius:14px; }
+  :global(.shape.triangle) { background:#ffa3a3; color:#631717; }
+  :global(.shape.rectangle) { border-radius:10px; }
+  :global(.shape.hexagon), :global(.shape.pentagon), :global(.shape.heptagon), :global(.shape.octagon) {
+    background:#ffe7a6;
+    color:#4c3400;
+  }
+  :global(.shape.matched) {
+    background: #7be08e !important;
+    color: #10361c !important;
+    border-color: #24763b;
+  }
+  .basket {
+    border:2px solid #6f4caf;
+    background:#fff;
+    border-radius:12px;
+    padding:1rem .7rem;
+    width: 100%;
+    min-height: 64px;
+    font-size: clamp(1.3rem, 5.6vw, 1.65rem);
+    line-height: 1.1;
+    font-weight: 700;
+  }
+  .reload-wrap { margin-top: 1rem; text-align: center; }
+  .reload-btn {
+    border: 2px solid #2f6f4e;
+    background: #2f6f4e;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  [data-msg] {
+    min-height: 1.6em;
+    font-size: clamp(1.15rem, 4.8vw, 1.4rem);
+    font-weight: 700;
+    margin-top: 0.55rem;
+  }
 </style>
