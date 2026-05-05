@@ -204,3 +204,4 @@ When continuing this project in a **new chat or agent**:
 | 2026-05-04 | Added §4 *Before we switch sites* (legacy root edit → commit → push → Pages timing). |
 | 2026-05-04 | Renamed / replaced transfer artifact; canonical file is **`goji_b_plan.md`**. |
 | 2026-05-05 | Scaffolded `site/` with Astro + Starlight and verified `npm run build` output in `site/dist/`. |
+| 2026-05-05 | Migrated Tic-Tac-Toe into Starlight (`/games/tic-tac-toe/`) and removed legacy root HTML/CSS/JS site files. |

@@ -23,6 +23,10 @@ export default defineConfig({
 						{ label: 'Module Template', slug: 'modules/module-template' },
 					],
 				},
+				{
+					label: 'Games',
+					items: [{ label: 'Tic-Tac-Toe', slug: 'games/tic-tac-toe' }],
+				},
 			],
 		}),
 	],

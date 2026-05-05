@@ -1,2 +1,17 @@
 # Goji-B.com
-This is where we will develop the website with this name
+
+Main source repository for the Goji-B website.
+
+## Production source
+
+- Website source lives in `site/` (Astro + Starlight).
+- Production deploy runs through GitHub Actions (`.github/workflows/deploy-site.yml`).
+- Legacy root HTML/CSS/JS pages were retired; keep new work inside `site/`.
+
+## Local preview (optional)
+
+```bash
+cd site
+npm install
+npm run dev
+```

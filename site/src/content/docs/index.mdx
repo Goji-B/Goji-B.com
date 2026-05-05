@@ -11,9 +11,9 @@ hero:
     - text: Module Catalog
       link: /modules/
       icon: right-arrow
-    - text: Play Legacy Game
-      link: /games/
-      icon: external
+    - text: Play Tic-Tac-Toe
+      link: /games/tic-tac-toe/
+      icon: right-arrow
       variant: minimal
 ---
 
@@ -32,6 +32,6 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 		Each module targets three complete Zephyr samples, linked to source repos.
 	</Card>
 	<Card title="Cutover-safe delivery" icon="check">
-		Build in `site/` first, keep root legacy pages live until formal cutover.
+		Build and deploy through `site/` using GitHub Actions + GitHub Pages.
 	</Card>
 </CardGrid>
