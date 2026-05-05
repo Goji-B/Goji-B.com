@@ -1,0 +1,45 @@
+<section class="game">
+  <h2>Color Match Tap</h2>
+  <p data-status>Tap the color: <strong data-target>Green</strong></p>
+  <div class="row" data-buttons></div>
+  <p>Score: <strong data-score>0</strong></p>
+</section>
+
+<script>
+  function initColorMatch() {
+    const root = document.querySelector('[data-buttons]')?.closest('.game');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const btnWrap = root.querySelector('[data-buttons]');
+    const targetEl = root.querySelector('[data-target]');
+    const scoreEl = root.querySelector('[data-score]');
+    const colors = ['Red', 'Blue', 'Green', 'Yellow'];
+    let score = 0;
+    function nextRound() {
+      const target = colors[Math.floor(Math.random() * colors.length)];
+      targetEl.textContent = target;
+      btnWrap.innerHTML = '';
+      colors.forEach((c) => {
+        const b = document.createElement('button');
+        b.textContent = c;
+        b.className = 'btn';
+        b.style.background = c.toLowerCase();
+        b.addEventListener('click', () => {
+          if (c === target) score += 1;
+          scoreEl.textContent = String(score);
+          nextRound();
+        });
+        btnWrap.appendChild(b);
+      });
+    }
+    nextRound();
+  }
+  initColorMatch();
+  document.addEventListener('astro:page-load', initColorMatch);
+</script>
+
+<style>
+  .game { padding: 1rem; border-radius: 14px; background: #f6fff6; }
+  .row { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: .7rem; }
+  .btn { color: #fff; border: 0; border-radius: 10px; padding: .9rem; font-weight: 700; }
+</style>

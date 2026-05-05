@@ -1,0 +1,43 @@
+<section class="game" data-bubble-root>
+  <h2>Bubble Pop ABC</h2>
+  <p>Pop the bubbles in A -> B -> C order.</p>
+  <div class="row" data-row></div>
+  <p data-msg></p>
+</section>
+
+<script>
+  function initBubble() {
+    const root = document.querySelector('[data-bubble-root]');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const row = root.querySelector('[data-row]');
+    const msg = root.querySelector('[data-msg]');
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F'];
+    let target = 0;
+    letters.sort(() => Math.random() - 0.5).forEach((l) => {
+      const b = document.createElement('button');
+      b.textContent = l;
+      b.className = 'bubble';
+      b.addEventListener('click', () => {
+        if (l === ['A', 'B', 'C', 'D', 'E', 'F'][target]) {
+          b.disabled = true;
+          b.classList.add('ok');
+          target += 1;
+          msg.textContent = target === 6 ? 'Awesome! All letters popped.' : '';
+        } else {
+          msg.textContent = 'Try the next letter in order.';
+        }
+      });
+      row.appendChild(b);
+    });
+  }
+  initBubble();
+  document.addEventListener('astro:page-load', initBubble);
+</script>
+
+<style>
+  .game { background:#eff7ff; padding:1rem; border-radius:14px; }
+  .row { display:flex; flex-wrap:wrap; gap:.6rem; }
+  .bubble { width:64px; height:64px; border-radius:50%; border:2px solid #6ab6ff; background:#cfe9ff; font-weight:800; }
+  .bubble.ok { opacity:.5; }
+</style>

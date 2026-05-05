@@ -1,0 +1,41 @@
+<section class="game" data-trace-root>
+  <h2>Trace the Path</h2>
+  <p data-msg>Tap dots in order: 1 → 2 → 3 → 4 → 5</p>
+  <div class="path">
+    <button class="dot" data-step="1">1</button>
+    <button class="dot" data-step="2">2</button>
+    <button class="dot" data-step="3">3</button>
+    <button class="dot" data-step="4">4</button>
+    <button class="dot" data-step="5">5</button>
+  </div>
+</section>
+
+<script>
+  function initTrace() {
+    const root = document.querySelector('[data-trace-root]');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const msg = root.querySelector('[data-msg]');
+    const dots = [...root.querySelectorAll('.dot')];
+    let next = 1;
+    dots.forEach((d) => d.addEventListener('click', () => {
+      const step = Number(d.dataset.step);
+      if (step === next) {
+        d.classList.add('ok');
+        next += 1;
+        if (next === 6) msg.textContent = 'Nice tracing!';
+      } else {
+        msg.textContent = `Start from ${next}.`;
+      }
+    }));
+  }
+  initTrace();
+  document.addEventListener('astro:page-load', initTrace);
+</script>
+
+<style>
+  .game { background:#eef6ff; padding:1rem; border-radius:14px; }
+  .path { display:flex; flex-wrap:wrap; gap:.7rem; max-width:300px; }
+  .dot { width:52px; height:52px; border-radius:50%; border:2px solid #8ab3ff; background:#fff; font-weight:700; }
+  .dot.ok { background:#bde7ff; }
+</style>

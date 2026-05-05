@@ -1,0 +1,38 @@
+<section class="game" data-fruit-root>
+  <h2>Count the Fruits</h2>
+  <p>How many apples do you see?</p>
+  <div class="fruits" data-fruits></div>
+  <div class="answers" data-answers></div>
+  <p data-msg></p>
+</section>
+
+<script>
+  function initFruit() {
+    const root = document.querySelector('[data-fruit-root]');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const fruits = root.querySelector('[data-fruits]');
+    const answers = root.querySelector('[data-answers]');
+    const msg = root.querySelector('[data-msg]');
+    const count = Math.floor(Math.random() * 5) + 3;
+    fruits.textContent = '🍎'.repeat(count);
+    [count - 1, count, count + 1].sort(() => Math.random() - 0.5).forEach((n) => {
+      const b = document.createElement('button');
+      b.className = 'ans';
+      b.textContent = String(n);
+      b.addEventListener('click', () => {
+        msg.textContent = n === count ? 'Correct! Nice counting.' : 'Try again!';
+      });
+      answers.appendChild(b);
+    });
+  }
+  initFruit();
+  document.addEventListener('astro:page-load', initFruit);
+</script>
+
+<style>
+  .game { background:#fff4f4; padding:1rem; border-radius:14px; }
+  .fruits { font-size:2rem; margin:.7rem 0; }
+  .answers { display:flex; gap:.6rem; }
+  .ans { padding:.5rem .9rem; border-radius:10px; border:2px solid #ffb0b0; background:#fff; font-weight:700; }
+</style>

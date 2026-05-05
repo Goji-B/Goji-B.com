@@ -1,18 +1,23 @@
-<section class="game-wrap">
+<section class="game-wrap" data-tictactoe>
   <h2>Tic-Tac-Toe</h2>
   <p class="subtitle">A quick family game, now inside the main Goji-B site.</p>
 
-  <div class="game-board" id="board"></div>
-  <p id="status">Player X's turn</p>
-  <button id="reset" type="button">Reset Game</button>
+  <div class="game-board" data-board></div>
+  <p data-status>Player X's turn</p>
+  <button data-reset type="button">Reset Game</button>
 </section>
 
 <script>
-  const board = document.getElementById("board");
-  const status = document.getElementById("status");
-  const reset = document.getElementById("reset");
+  function initTicTacToe() {
+    const root = document.querySelector("[data-tictactoe]");
+    if (!root || root.dataset.initialized === "true") return;
 
-  if (board && status && reset) {
+    const board = root.querySelector("[data-board]");
+    const status = root.querySelector("[data-status]");
+    const reset = root.querySelector("[data-reset]");
+    if (!board || !status || !reset) return;
+
+    root.dataset.initialized = "true";
     let currentPlayer = "X";
     let gameActive = true;
     let gameState = Array(9).fill("");
@@ -33,11 +38,7 @@
     function checkWin() {
       return winCombos.some((combo) => {
         const [a, b, c] = combo;
-        return (
-          gameState[a] &&
-          gameState[a] === gameState[b] &&
-          gameState[a] === gameState[c]
-        );
+        return gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c];
       });
     }
 
@@ -53,12 +54,14 @@
     }
 
     function handleClick(event) {
-      const index = Number(event.target.dataset.index);
+      const tile = event.target.closest(".tile");
+      if (!tile) return;
+      const index = Number(tile.dataset.index);
       if (!gameActive || Number.isNaN(index) || gameState[index] !== "") return;
 
       gameState[index] = currentPlayer;
-      event.target.textContent = currentPlayer;
-      event.target.classList.add(currentPlayer.toLowerCase());
+      tile.textContent = currentPlayer;
+      tile.classList.add(currentPlayer.toLowerCase());
 
       if (checkWin()) {
         status.textContent = `Player ${currentPlayer} wins!`;
@@ -88,6 +91,9 @@
     board.addEventListener("click", handleClick);
     reset.addEventListener("click", resetGame);
   }
+
+  initTicTacToe();
+  document.addEventListener("astro:page-load", initTicTacToe);
 </script>
 
 <style>
@@ -145,14 +151,14 @@
     color: #10251b !important;
   }
 
-  #status {
+  [data-status] {
     margin: 20px 0;
     font-size: 1.1rem;
     color: #223c30;
     font-weight: bold;
   }
 
-  #reset {
+  [data-reset] {
     padding: 10px 20px;
     background-color: #2f6f4e;
     color: #ffffff;
@@ -163,7 +169,7 @@
     transition: background-color 0.3s ease;
   }
 
-  #reset:hover {
+  [data-reset]:hover {
     background-color: #3e8a62;
   }
 </style>

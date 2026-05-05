@@ -1,0 +1,49 @@
+<section class="game" data-memory-root>
+  <h2>Animal Memory Cards</h2>
+  <p data-msg>Find all matching animal pairs.</p>
+  <div class="grid" data-grid></div>
+</section>
+
+<script>
+  function initMemory() {
+    const root = document.querySelector('[data-memory-root]');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const grid = root.querySelector('[data-grid]');
+    const msg = root.querySelector('[data-msg]');
+    const animals = ['Cat', 'Dog', 'Fox', 'Owl', 'Cat', 'Dog', 'Fox', 'Owl'];
+    const cards = animals.sort(() => Math.random() - 0.5);
+    let first = null;
+    let lock = false;
+    let matched = 0;
+    cards.forEach((name) => {
+      const b = document.createElement('button');
+      b.className = 'card';
+      b.dataset.name = name;
+      b.textContent = '?';
+      b.addEventListener('click', () => {
+        if (lock || b.classList.contains('ok') || b === first) return;
+        b.textContent = name;
+        if (!first) { first = b; return; }
+        if (first.dataset.name === b.dataset.name) {
+          first.classList.add('ok'); b.classList.add('ok');
+          matched += 2; first = null;
+          if (matched === cards.length) msg.textContent = 'Great job! You matched all cards.';
+        } else {
+          lock = true;
+          setTimeout(() => { first.textContent = '?'; b.textContent = '?'; first = null; lock = false; }, 700);
+        }
+      });
+      grid.appendChild(b);
+    });
+  }
+  initMemory();
+  document.addEventListener('astro:page-load', initMemory);
+</script>
+
+<style>
+  .game { background:#fff9ef; padding:1rem; border-radius:14px; }
+  .grid { display:grid; grid-template-columns:repeat(4,minmax(70px,1fr)); gap:.6rem; }
+  .card { min-height:60px; border-radius:10px; border:2px solid #f0d090; background:#fff; font-weight:700; }
+  .card.ok { background:#d8f8d8; }
+</style>

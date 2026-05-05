@@ -1,0 +1,35 @@
+<div class="games-grid">
+  <a class="game-card" href="/games/tic-tac-toe/">Tic-Tac-Toe</a>
+  <a class="game-card" href="/games/color-match-tap/">Color Match Tap</a>
+  <a class="game-card" href="/games/animal-memory-cards/">Animal Memory Cards</a>
+  <a class="game-card" href="/games/bubble-pop-abc/">Bubble Pop ABC</a>
+  <a class="game-card" href="/games/shape-sorter/">Shape Sorter</a>
+  <a class="game-card" href="/games/count-the-fruits/">Count the Fruits</a>
+  <a class="game-card" href="/games/simon-lights-mini/">Simon Lights Mini</a>
+  <a class="game-card" href="/games/find-the-odd-one/">Find the Odd One</a>
+  <a class="game-card" href="/games/trace-the-path/">Trace the Path</a>
+</div>
+
+<style>
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .game-card {
+    text-decoration: none;
+    color: #123;
+    font-weight: 700;
+    text-align: center;
+    padding: 1rem 0.8rem;
+    border-radius: 16px;
+    border: 2px solid #9cc;
+    background: linear-gradient(135deg, #fff7c8, #d8f7cf);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  }
+  .game-card:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #ffdcb8, #cdeeff);
+  }
+</style>

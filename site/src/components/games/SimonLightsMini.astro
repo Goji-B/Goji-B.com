@@ -1,0 +1,58 @@
+<section class="game" data-simon-root>
+  <h2>Simon Lights Mini</h2>
+  <p data-msg>Watch the pattern, then repeat it.</p>
+  <div class="grid">
+    <button data-key="0" class="pad p1"></button>
+    <button data-key="1" class="pad p2"></button>
+    <button data-key="2" class="pad p3"></button>
+    <button data-key="3" class="pad p4"></button>
+  </div>
+  <button data-start class="start">Start</button>
+</section>
+
+<script>
+  function initSimon() {
+    const root = document.querySelector('[data-simon-root]');
+    if (!root || root.dataset.init === '1') return;
+    root.dataset.init = '1';
+    const msg = root.querySelector('[data-msg]');
+    const pads = [...root.querySelectorAll('.pad')];
+    const start = root.querySelector('[data-start]');
+    let seq = [];
+    let user = [];
+    let playing = false;
+    function flash(i) {
+      pads[i].classList.add('on');
+      setTimeout(() => pads[i].classList.remove('on'), 250);
+    }
+    function showSeq() {
+      playing = true;
+      user = [];
+      seq.forEach((n, i) => setTimeout(() => flash(n), 400 * (i + 1)));
+      setTimeout(() => { playing = false; msg.textContent = 'Your turn!'; }, 450 * (seq.length + 1));
+    }
+    start.addEventListener('click', () => {
+      seq.push(Math.floor(Math.random() * 4));
+      msg.textContent = `Round ${seq.length}`;
+      showSeq();
+    });
+    pads.forEach((p, idx) => p.addEventListener('click', () => {
+      if (playing || seq.length === 0) return;
+      user.push(idx); flash(idx);
+      const pos = user.length - 1;
+      if (user[pos] !== seq[pos]) { msg.textContent = 'Oops! Press Start for new round.'; seq = []; }
+      else if (user.length === seq.length) { msg.textContent = 'Great! Next round...'; setTimeout(() => start.click(), 500); }
+    }));
+  }
+  initSimon();
+  document.addEventListener('astro:page-load', initSimon);
+</script>
+
+<style>
+  .game { background:#f3fff8; padding:1rem; border-radius:14px; }
+  .grid { display:grid; grid-template-columns:repeat(2,80px); gap:.7rem; }
+  .pad { width:80px; height:80px; border:0; border-radius:14px; opacity:.8; }
+  .pad.on { outline:4px solid #fff; opacity:1; }
+  .p1{background:#ff9f9f}.p2{background:#ffd88d}.p3{background:#98d5ff}.p4{background:#9cf0ad}
+  .start { margin-top:.8rem; border-radius:10px; padding:.55rem .95rem; border:0; background:#324; color:#fff; }
+</style>
