@@ -25,7 +25,10 @@ export default defineConfig({
 				},
 				{
 					label: 'Games',
-					items: [{ label: 'Tic-Tac-Toe', slug: 'games/tic-tac-toe' }],
+					items: [
+						{ label: 'Games Home', slug: 'games' },
+						{ label: 'Tic-Tac-Toe', slug: 'games/tic-tac-toe' },
+					],
 				},
 			],
 		}),
