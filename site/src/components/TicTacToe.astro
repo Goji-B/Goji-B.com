@@ -2,7 +2,17 @@
   <h2>Tic-Tac-Toe</h2>
   <p class="subtitle">A quick family game, now inside the main Goji-B site.</p>
 
-  <div class="game-board" data-board></div>
+  <div class="game-board" data-board>
+    <button class="tile" data-index="0" type="button" aria-label="Tile 1"></button>
+    <button class="tile" data-index="1" type="button" aria-label="Tile 2"></button>
+    <button class="tile" data-index="2" type="button" aria-label="Tile 3"></button>
+    <button class="tile" data-index="3" type="button" aria-label="Tile 4"></button>
+    <button class="tile" data-index="4" type="button" aria-label="Tile 5"></button>
+    <button class="tile" data-index="5" type="button" aria-label="Tile 6"></button>
+    <button class="tile" data-index="6" type="button" aria-label="Tile 7"></button>
+    <button class="tile" data-index="7" type="button" aria-label="Tile 8"></button>
+    <button class="tile" data-index="8" type="button" aria-label="Tile 9"></button>
+  </div>
   <p data-status>Player X's turn</p>
   <button data-reset type="button">Reset Game</button>
 </section>
@@ -27,13 +37,6 @@
       [0, 3, 6], [1, 4, 7], [2, 5, 8],
       [0, 4, 8], [2, 4, 6]
     ];
-
-    for (let i = 0; i < 9; i += 1) {
-      const tile = document.createElement("div");
-      tile.classList.add("tile");
-      tile.dataset.index = String(i);
-      board.appendChild(tile);
-    }
 
     function checkWin() {
       return winCombos.some((combo) => {
@@ -120,7 +123,8 @@
   .tile {
     width: 100px;
     height: 100px;
-    background-color: #f5fbf7;
+    background-color: #ffffff;
+    border: 2px solid #2f6f4e;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -128,7 +132,7 @@
     font-size: 2.5rem;
     font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.16);
   }
 
