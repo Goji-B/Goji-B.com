@@ -94,8 +94,9 @@ After Starlight lives in **`site/`**, local preview: `cd site && npm run dev`. P
 
 1. **The GitHub repo holds the *source* of the website** (Astro/Starlight, markdown, config, this plan file). **Do not** maintain a repo that is **only** built HTML with **no** source — it makes updates painful and loses history.
 2. **`dist/`** is a **build artifact.** Default: add **`dist/` to `.gitignore`** in the Astro project. Deploy `dist/` via **GitHub Actions** and/or manual upload — **do not** rely on committing `dist/` unless you have a deliberate, documented exception.
-3. **Optional:** **GitHub Actions** runs `npm ci` + `npm run build` on push; publishes to **GitHub Pages**. Then **local Node is optional** for *deployment*, but **still recommended** on the laptop for `npm run dev` (fast preview).
-4. **GitHub Pages vs Pi:** **Pages** is a strong option for **reliability** and **low ops** for a static site. **Pi** remains valid for self-hosting or staging. They are **alternatives**, not mutually exclusive (e.g. Pi staging + Pages production).
+3. **Default policy (Goji-B):** **GitHub Actions** runs `npm ci` + `npm run build` on push and publishes to **GitHub Pages**. This is the primary deployment path and should be used going forward.
+4. **Local npm policy:** Local `npm run dev` / `npm run build` is **optional** and used for preview/debug only. Deployment should still happen via GitHub Actions.
+5. **GitHub Pages vs Pi:** **Pages** is a strong option for **reliability** and **low ops** for a static site. **Pi** remains valid for self-hosting or staging. They are **alternatives**, not mutually exclusive (e.g. Pi staging + Pages production).
 
 ### Custom domain
 
@@ -123,6 +124,7 @@ After Starlight lives in **`site/`**, local preview: `cd site && npm run dev`. P
 2. **Site content** lives under **`site/src`** (Starlight) once scaffolded; until then, legacy root files apply.
 3. **Zephyr projects** live in **their own Git repos**; pages **link** to them with clear **version/board** notes.
 4. **Ship (Starlight era):** `cd site && npm run build` → deploy **`site/dist/`** to the chosen host (Pages workflow, manual upload, or Pi `public_html`).
+5. **Preferred ship flow:** push source to GitHub and let **GitHub Actions** run npm/build/deploy for production.
 
 ---
 
@@ -133,13 +135,13 @@ After Starlight lives in **`site/`**, local preview: `cd site && npm run dev`. P
 - [x] Node.js LTS working on laptop (incl. PowerShell execution policy if needed).
 - [ ] Clone [Goji-B/Goji-B.com](https://github.com/Goji-B/Goji-B.com) to `C:\zephyrproject\Goji-B.com` (if not already).
 - [x] **`goji_b_plan.md`** in repo root (this file).
-- [ ] Run Starlight scaffold into **`site/`** (see §3).
+- [x] Run Starlight scaffold into **`site/`** (see §3).
 - [ ] `npm run dev` in `site/` — confirm starter loads.
-- [ ] `npm run build` — confirm `site/dist/` exists.
+- [x] `npm run build` — confirm `site/dist/` exists.
 
 ### Hosting & cutover
 
-- [ ] Configure **GitHub Pages** (and/or Actions) to serve **`site/dist`** after build.
+- [ ] Configure **GitHub Actions + Pages** as the default to build and publish `site/dist` on push.
 - [ ] Preserve **custom domain** (`CNAME`) through deploy.
 - [ ] Remove or archive **legacy** root `index.html` / old assets when the new site is live.
 - [ ] Decide final **canonical URL** (e.g. `goji-b.com` vs other) and document in *Decisions* below.
@@ -170,6 +172,7 @@ After Starlight lives in **`site/`**, local preview: `cd site && npm run dev`. P
 | 2026-05 | **Source in Git**; **`dist/`** via build/CI — avoid repo that is only built files. |
 | 2026-05 | **GitHub Pages** encouraged for reliability; **Pi** optional / staging / other uses. |
 | 2026-05-04 | Canonical planning doc in repo: **`goji_b_plan.md`**; retired transfer file `goji_B_Plan.md.txt`. |
+| 2026-05-05 | Deployment policy clarified: production npm/build/deploy should run in **GitHub Actions**; local npm is preview/debug only. |
 
 ---
 
@@ -200,3 +203,4 @@ When continuing this project in a **new chat or agent**:
 | 2026-05-04 | Created consolidated plan (product, stack, repo layout, Git/Pages policies, Windows notes, checklist, agent handoff). |
 | 2026-05-04 | Added §4 *Before we switch sites* (legacy root edit → commit → push → Pages timing). |
 | 2026-05-04 | Renamed / replaced transfer artifact; canonical file is **`goji_b_plan.md`**. |
+| 2026-05-05 | Scaffolded `site/` with Astro + Starlight and verified `npm run build` output in `site/dist/`. |

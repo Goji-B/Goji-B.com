@@ -1,0 +1,37 @@
+---
+title: Goji-B Landing (Starlight)
+description: Investor-first technical landing for Goji-B modules and Zephyr sample portfolio.
+template: splash # Remove or comment out this line to display the site sidebar on this page.
+hero:
+  tagline: Reliable electronic modules with production-grade Zephyr RTOS sample implementations.
+  actions:
+    - text: Company Overview
+      link: /company/
+      icon: right-arrow
+    - text: Module Catalog
+      link: /modules/
+      icon: right-arrow
+    - text: Play Legacy Game
+      link: /games/
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## What we are building
+
+<CardGrid stagger>
+	<Card title="Investor-ready narrative" icon="star">
+		Clear company story, module roadmap, and technical proof points.
+	</Card>
+	<Card title="Module-first structure" icon="seti:json">
+		10-15 modules in phase one, each with practical use-case framing.
+	</Card>
+	<Card title="Zephyr sample quality" icon="open-book">
+		Each module targets three complete Zephyr samples, linked to source repos.
+	</Card>
+	<Card title="Cutover-safe delivery" icon="check">
+		Build in `site/` first, keep root legacy pages live until formal cutover.
+	</Card>
+</CardGrid>
