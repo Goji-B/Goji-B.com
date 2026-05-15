@@ -1,37 +1,43 @@
 <section class="game" data-shape-root data-music-theme="dreamy">
   <h2>Shape Sorter</h2>
-  <p class="listen-hint" data-hint>Listen, then tap the shape you hear.</p>
+  <p class="listen-hint">Listen, then tap the shape you hear.</p>
   <p class="listen-pulse" data-listen aria-live="polite">
     <span class="ear" aria-hidden="true">👂</span>
     <span class="listen-label" data-listen-label>Tap Start</span>
   </p>
   <p class="feedback" data-feedback aria-live="assertive"></p>
   <div class="shape-grid" data-grid></div>
-  <p class="progress">★ <strong data-score>0</strong> / <span data-total>8</span></p>
-  <p class="next-wrap" data-next-wrap hidden>
-    <button class="next-btn" data-next type="button">Again!</button>
-  </p>
+  <p class="progress">Done: <strong data-score>0</strong> / <span data-total>6</span></p>
   <button class="start-btn" data-start type="button">Start</button>
+  <button class="stop-btn" data-stop type="button" hidden>Stop</button>
 </section>
 
 <script>
   import { audio, bindActivityUnlock } from '../../lib/activityAudio';
 
+  const VISIBLE_COUNT = 6;
+  const SET_ADVANCE_MS = 1400;
+  const PROMPT_DELAY_MS = 320;
+
   const SHAPE_POOL = [
     { key: 'circle', label: 'Circle' },
-    { key: 'triangle', label: 'Triangle' },
-    { key: 'rectangle', label: 'Rectangle' },
+    { key: 'oval', label: 'Oval' },
     { key: 'square', label: 'Square' },
+    { key: 'rectangle', label: 'Rectangle' },
+    { key: 'triangle', label: 'Triangle' },
+    { key: 'diamond', label: 'Diamond' },
     { key: 'pentagon', label: 'Pentagon' },
     { key: 'hexagon', label: 'Hexagon' },
-    { key: 'cone', label: 'Cone' },
-    { key: 'cylinder', label: 'Cylinder' },
-    { key: 'prism', label: 'Prism' },
+    { key: 'octagon', label: 'Octagon' },
+    { key: 'star', label: 'Star' },
+    { key: 'sphere', label: 'Sphere' },
     { key: 'cube', label: 'Cube' },
+    { key: 'cuboid', label: 'Cuboid' },
+    { key: 'cylinder', label: 'Cylinder' },
+    { key: 'cone', label: 'Cone' },
+    { key: 'pyramid', label: 'Pyramid' },
+    { key: 'prism', label: 'Prism' },
   ];
-
-  const ROUNDS_PER_GAME = 8;
-  const ADVANCE_MS = 1100;
 
   function initShape() {
     const root = document.querySelector('[data-shape-root]');
@@ -46,17 +52,17 @@
     const scoreEl = root.querySelector('[data-score]');
     const totalEl = root.querySelector('[data-total]');
     const startBtn = root.querySelector('[data-start]');
-    const nextWrap = root.querySelector('[data-next-wrap]');
-    const nextBtn = root.querySelector('[data-next]');
+    const stopBtn = root.querySelector('[data-stop]');
 
-    const tileByKey = new Map();
-    let queue = [];
-    let queueIndex = 0;
-    let score = 0;
+    let activeSet = [];
+    let callOrder = [];
+    let callIndex = 0;
+    let doneCount = 0;
     let locked = false;
     let playing = false;
     let advanceTimer = null;
     let speakTimer = null;
+    let setsCompleted = 0;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -67,6 +73,10 @@
       return copy;
     }
 
+    function pickNewSet() {
+      return shuffle(SHAPE_POOL).slice(0, VISIBLE_COUNT);
+    }
+
     function addGlyph(button, shapeKey) {
       const glyph = document.createElement('span');
       glyph.className = `shape-glyph shape-glyph-${shapeKey}`;
@@ -74,10 +84,9 @@
       button.appendChild(glyph);
     }
 
-    function buildGrid() {
+    function renderGrid(shapes) {
       grid.innerHTML = '';
-      tileByKey.clear();
-      SHAPE_POOL.forEach((def) => {
+      shapes.forEach((def) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'shape-tile';
@@ -86,15 +95,11 @@
         addGlyph(b, def.key);
         b.addEventListener('click', () => onTileClick(b, def));
         grid.appendChild(b);
-        tileByKey.set(def.key, b);
       });
     }
 
-    function clearTileStates() {
-      tileByKey.forEach((tile) => {
-        tile.disabled = false;
-        tile.classList.remove('correct', 'wrong', 'want');
-      });
+    function getTile(key) {
+      return grid.querySelector(`[data-shape="${key}"]`);
     }
 
     function speakShape(label, delayMs = 0) {
@@ -113,23 +118,40 @@
     }
 
     function currentTarget() {
-      return queue[queueIndex];
+      return callOrder[callIndex];
+    }
+
+    function updateProgress() {
+      scoreEl.textContent = String(doneCount);
+      totalEl.textContent = String(VISIBLE_COUNT);
     }
 
     function promptNext() {
-      if (queueIndex >= queue.length) {
-        finishGame();
+      if (callIndex >= callOrder.length) {
+        completeSet();
         return;
       }
-      const def = currentTarget();
       locked = false;
-      clearTileStates();
       feedback.textContent = '';
-      speakShape(def.label, 280);
+      const def = currentTarget();
+      if (!def) return;
+      const tile = getTile(def.key);
+      if (tile?.classList.contains('done')) {
+        callIndex += 1;
+        promptNext();
+        return;
+      }
+      speakShape(def.label, PROMPT_DELAY_MS);
+    }
+
+    function markDone(tile) {
+      tile.classList.remove('wrong');
+      tile.classList.add('done');
+      tile.disabled = true;
     }
 
     function onTileClick(tile, def) {
-      if (!playing || locked) return;
+      if (!playing || locked || tile.classList.contains('done')) return;
       audio.unlock();
 
       const target = currentTarget();
@@ -137,21 +159,22 @@
 
       if (def.key === target.key) {
         locked = true;
-        tile.classList.add('correct');
-        tileByKey.forEach((t) => {
-          t.disabled = true;
-        });
-        score += 1;
-        scoreEl.textContent = String(score);
+        markDone(tile);
+        doneCount += 1;
+        updateProgress();
         feedback.textContent = 'Yay!';
         audio.speak('Yay!');
         audio.playSfx('clink');
-        root.classList.add('round-win');
-        queueIndex += 1;
-        advanceTimer = window.setTimeout(() => {
-          root.classList.remove('round-win');
-          promptNext();
-        }, ADVANCE_MS);
+        callIndex += 1;
+
+        if (doneCount >= VISIBLE_COUNT) {
+          advanceTimer = window.setTimeout(completeSet, 650);
+        } else {
+          advanceTimer = window.setTimeout(() => {
+            feedback.textContent = '';
+            promptNext();
+          }, 750);
+        }
       } else {
         tile.classList.remove('wrong');
         void tile.offsetWidth;
@@ -162,20 +185,29 @@
       }
     }
 
-    function finishGame() {
-      playing = false;
+    function completeSet() {
       locked = true;
-      startBtn.hidden = false;
-      nextWrap.hidden = false;
-      listenLabel.textContent = 'Done!';
-      feedback.textContent = '★ ★ ★';
+      setsCompleted += 1;
+      feedback.textContent = '★ All six!';
       audio.speak('Yay!');
-      audio.playSfx('success');
-      root.classList.add('all-done');
-      tileByKey.forEach((t) => {
-        t.disabled = true;
-        t.classList.add('correct');
-      });
+      audio.playSfx('sparkle');
+      root.classList.add('set-flash');
+      advanceTimer = window.setTimeout(() => {
+        root.classList.remove('set-flash');
+        if (playing) startNewSet();
+      }, SET_ADVANCE_MS);
+    }
+
+    function startNewSet() {
+      activeSet = pickNewSet();
+      callOrder = shuffle([...activeSet]);
+      callIndex = 0;
+      doneCount = 0;
+      updateProgress();
+      renderGrid(activeSet);
+      listenLabel.textContent = 'Listen…';
+      feedback.textContent = '';
+      promptNext();
     }
 
     function startGame() {
@@ -185,48 +217,36 @@
       if (audio.musicOn) audio.startMusic('dreamy');
 
       playing = true;
-      locked = true;
-      score = 0;
-      queueIndex = 0;
-      scoreEl.textContent = '0';
-      totalEl.textContent = String(ROUNDS_PER_GAME);
+      locked = false;
+      setsCompleted = 0;
       feedback.textContent = '';
       startBtn.hidden = true;
-      nextWrap.hidden = true;
-      root.classList.remove('all-done', 'round-win');
-
-      const picks = shuffle(SHAPE_POOL).slice(0, ROUNDS_PER_GAME);
-      queue = picks;
-      clearTileStates();
-      listenLabel.textContent = 'Listen…';
-      promptNext();
+      stopBtn.hidden = false;
+      root.classList.remove('set-flash');
+      startNewSet();
     }
 
-    function resetUI() {
+    function stopGame() {
       playing = false;
-      locked = false;
+      locked = true;
       if (advanceTimer) clearTimeout(advanceTimer);
       if (speakTimer) clearTimeout(speakTimer);
       startBtn.hidden = false;
-      nextWrap.hidden = true;
+      stopBtn.hidden = true;
       listenLabel.textContent = 'Tap Start';
-      feedback.textContent = '';
-      root.classList.remove('all-done', 'round-win');
-      clearTileStates();
+      feedback.textContent = setsCompleted > 0 ? `Sets: ${setsCompleted}` : '';
+      grid.innerHTML = '';
+      root.classList.remove('set-flash');
     }
 
     startBtn.addEventListener('click', () => {
       audio.unlock();
       startGame();
     });
-    nextBtn.addEventListener('click', () => {
-      audio.unlock();
-      resetUI();
-      startGame();
-    });
+    stopBtn.addEventListener('click', stopGame);
 
-    buildGrid();
-    resetUI();
+    totalEl.textContent = String(VISIBLE_COUNT);
+    updateProgress();
   }
 
   initShape();
@@ -269,7 +289,6 @@
 
   .ear {
     font-size: 1.5rem;
-    line-height: 1;
   }
 
   .listen-label {
@@ -293,22 +312,23 @@
   .feedback {
     min-height: 1.5rem;
     margin: 0;
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: #1f6b3a;
   }
 
   .shape-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(58px, 1fr));
-    gap: 0.5rem;
-    max-width: 440px;
+    grid-template-columns: repeat(3, minmax(72px, 1fr));
+    gap: 0.55rem;
+    max-width: 360px;
     margin: 0.5rem auto;
   }
 
   :global(.shape-tile) {
     all: unset;
     box-sizing: border-box;
+    position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
     border: 2px solid #6f4caf;
@@ -318,21 +338,28 @@
     justify-content: center;
     cursor: pointer;
     border-radius: 12px;
-    padding: 0;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
 
-  :global(.shape-tile:disabled) {
-    cursor: default;
-  }
-
-  :global(.shape-tile.want) {
-    box-shadow: 0 0 0 3px #ffd54a;
-  }
-
-  :global(.shape-tile.correct) {
-    background: #e8ffe8;
+  :global(.shape-tile.done) {
+    background: #dfffe8;
     border-color: #2f9e44;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  :global(.shape-tile.done::after) {
+    content: '✓';
+    position: absolute;
+    top: 0.15rem;
+    right: 0.2rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #2f9e44;
+    line-height: 1;
+  }
+
+  :global(.shape-tile.done .shape-glyph) {
+    opacity: 0.55;
   }
 
   :global(.shape-tile.wrong) {
@@ -353,50 +380,56 @@
     }
   }
 
-  .game.round-win {
-    background: #efe8ff;
-  }
-
-  .game.all-done {
+  .game.set-flash {
     background: linear-gradient(180deg, #fff9e6 0%, #efe8ff 100%);
   }
 
   .progress {
     margin: 0.4rem 0 0.5rem;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
   }
 
   .start-btn,
-  .next-btn {
+  .stop-btn {
     border: 2px solid #2f6f4e;
     background: #2f6f4e;
     color: #fff;
     border-radius: 999px;
-    padding: 0.55rem 1.35rem;
+    padding: 0.55rem 1.2rem;
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1rem;
     cursor: pointer;
+    margin: 0 0.25rem;
   }
 
-  .next-wrap {
-    margin: 0.35rem 0 0.5rem;
+  .stop-btn {
+    border-color: #6f4caf;
+    background: #fff;
+    color: #4a2878;
   }
 
-  /* Shape glyphs ~75% of tile */
   :global(.shape-glyph) {
     display: block;
     flex-shrink: 0;
   }
 
   :global(.shape-tile .shape-glyph) {
-    width: 75%;
-    height: 75%;
+    width: 78%;
+    height: 78%;
   }
 
   :global(.shape-glyph-circle) {
     border-radius: 50%;
     background: #4dabf7;
+    border: 2px solid #1864ab;
+  }
+
+  :global(.shape-glyph-oval) {
+    width: 78%;
+    height: 54%;
+    border-radius: 50%;
+    background: #74c0fc;
     border: 2px solid #1864ab;
   }
 
@@ -406,17 +439,22 @@
     border-radius: 3px;
   }
 
+  :global(.shape-glyph-rectangle) {
+    width: 78%;
+    height: 50%;
+    background: #ffa94d;
+    border: 2px solid #e8590c;
+    border-radius: 3px;
+  }
+
   :global(.shape-glyph-triangle) {
     background: #ff8787;
     clip-path: polygon(50% 6%, 6% 94%, 94% 94%);
   }
 
-  :global(.shape-glyph-rectangle) {
-    width: 75%;
-    height: 48%;
-    background: #ffa94d;
-    border: 2px solid #e8590c;
-    border-radius: 3px;
+  :global(.shape-glyph-diamond) {
+    background: #ff6b9d;
+    clip-path: polygon(50% 4%, 96% 50%, 50% 96%, 4% 50%);
   }
 
   :global(.shape-glyph-pentagon) {
@@ -429,92 +467,37 @@
     clip-path: polygon(50% 4%, 92% 27%, 92% 73%, 50% 96%, 8% 73%, 8% 27%);
   }
 
-  :global(.shape-glyph-cone) {
-    position: relative;
-    width: 70%;
-    height: 75%;
+  :global(.shape-glyph-octagon) {
+    background: #a9e34b;
+    clip-path: polygon(30% 4%, 70% 4%, 96% 30%, 96% 70%, 70% 96%, 30% 96%, 4% 70%, 4% 30%);
   }
 
-  :global(.shape-glyph-cone::before) {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 0;
-    transform: translateX(-50%);
-    border-left: 38% solid transparent;
-    border-right: 38% solid transparent;
-    border-bottom: 60% solid #ff922b;
+  :global(.shape-glyph-star) {
+    background: #fcc419;
+    clip-path: polygon(
+      50% 2%,
+      61% 36%,
+      98% 36%,
+      68% 57%,
+      79% 92%,
+      50% 72%,
+      21% 92%,
+      32% 57%,
+      2% 36%,
+      39% 36%
+    );
   }
 
-  :global(.shape-glyph-cone::after) {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 76%;
-    height: 14%;
-    background: #fd7e14;
-    border: 2px solid #e8590c;
+  :global(.shape-glyph-sphere) {
     border-radius: 50%;
-  }
-
-  :global(.shape-glyph-cylinder) {
-    position: relative;
-    width: 48%;
-    height: 75%;
-    background: linear-gradient(90deg, #4c6ef5, #91a7ff, #364fc7);
+    background: radial-gradient(circle at 32% 28%, #fff 0%, #91a7ff 35%, #364fc7 100%);
     border: 2px solid #364fc7;
-    border-radius: 6px;
-  }
-
-  :global(.shape-glyph-cylinder::before),
-  :global(.shape-glyph-cylinder::after) {
-    content: '';
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 110%;
-    height: 20%;
-    border: 2px solid #364fc7;
-    border-radius: 50%;
-  }
-
-  :global(.shape-glyph-cylinder::before) {
-    top: -10%;
-    background: #bac8ff;
-  }
-
-  :global(.shape-glyph-cylinder::after) {
-    bottom: -8%;
-    background: #5c7cfa;
-  }
-
-  :global(.shape-glyph-prism) {
-    position: relative;
-  }
-
-  :global(.shape-glyph-prism::before) {
-    content: '';
-    position: absolute;
-    inset: 0;
-    clip-path: polygon(50% 6%, 94% 92%, 6% 92%);
-    background: #63e6be;
-    border: 2px solid #0ca678;
-  }
-
-  :global(.shape-glyph-prism::after) {
-    content: '';
-    position: absolute;
-    inset: 0;
-    clip-path: polygon(50% 6%, 94% 92%, 50% 92%);
-    background: #38d9a9;
   }
 
   :global(.shape-glyph-cube) {
     position: relative;
-    width: 54%;
-    height: 54%;
+    width: 56%;
+    height: 56%;
     margin-top: 4%;
   }
 
@@ -537,5 +520,148 @@
     background: #c0eb75;
     transform: rotate(-28deg) skewX(-18deg) translate(20%, -22%);
     z-index: -1;
+  }
+
+  :global(.shape-glyph-cuboid) {
+    position: relative;
+    width: 72%;
+    height: 48%;
+    margin-top: 6%;
+  }
+
+  :global(.shape-glyph-cuboid::before),
+  :global(.shape-glyph-cuboid::after) {
+    content: '';
+    position: absolute;
+    border: 2px solid #2f6f9e;
+    border-radius: 2px;
+  }
+
+  :global(.shape-glyph-cuboid::before) {
+    width: 100%;
+    height: 100%;
+    background: #66d9e8;
+    transform: rotate(-24deg) skewX(-12deg);
+  }
+
+  :global(.shape-glyph-cuboid::after) {
+    width: 88%;
+    height: 88%;
+    background: #99e9f2;
+    transform: rotate(-24deg) skewX(-12deg) translate(18%, -20%);
+    z-index: -1;
+  }
+
+  :global(.shape-glyph-cylinder) {
+    position: relative;
+    width: 50%;
+    height: 78%;
+    background: linear-gradient(90deg, #4c6ef5, #91a7ff, #364fc7);
+    border: 2px solid #364fc7;
+    border-radius: 6px;
+  }
+
+  :global(.shape-glyph-cylinder::before),
+  :global(.shape-glyph-cylinder::after) {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 112%;
+    height: 20%;
+    border: 2px solid #364fc7;
+    border-radius: 50%;
+  }
+
+  :global(.shape-glyph-cylinder::before) {
+    top: -10%;
+    background: #bac8ff;
+  }
+
+  :global(.shape-glyph-cylinder::after) {
+    bottom: -8%;
+    background: #5c7cfa;
+  }
+
+  :global(.shape-glyph-cone) {
+    position: relative;
+    width: 72%;
+    height: 78%;
+  }
+
+  :global(.shape-glyph-cone::before) {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    border-left: 38% solid transparent;
+    border-right: 38% solid transparent;
+    border-bottom: 62% solid #ff922b;
+  }
+
+  :global(.shape-glyph-cone::after) {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 78%;
+    height: 14%;
+    background: #fd7e14;
+    border: 2px solid #e8590c;
+    border-radius: 50%;
+  }
+
+  :global(.shape-glyph-pyramid) {
+    position: relative;
+    width: 72%;
+    height: 78%;
+  }
+
+  :global(.shape-glyph-pyramid::before) {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 2%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 34% solid transparent;
+    border-right: 34% solid transparent;
+    border-bottom: 52% solid #fab005;
+  }
+
+  :global(.shape-glyph-pyramid::after) {
+    content: '';
+    position: absolute;
+    bottom: 4%;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 48%;
+    height: 48%;
+    background: #f59f00;
+    border: 2px solid #e67700;
+  }
+
+  :global(.shape-glyph-prism) {
+    position: relative;
+  }
+
+  :global(.shape-glyph-prism::before) {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(50% 6%, 94% 92%, 6% 92%);
+    background: #63e6be;
+    border: 2px solid #0ca678;
+  }
+
+  :global(.shape-glyph-prism::after) {
+    content: '';
+    position: absolute;
+    inset: 0;
+    clip-path: polygon(50% 6%, 94% 92%, 50% 92%);
+    background: #38d9a9;
   }
 </style>
