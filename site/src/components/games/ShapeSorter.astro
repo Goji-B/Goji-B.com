@@ -24,14 +24,12 @@
     const reloadBtn = root.querySelector('[data-reload]');
 
     const shapePool = [
-      { key: 'circle', label: 'Circle', symbol: '●' },
-      { key: 'square', label: 'Square', symbol: '■' },
-      { key: 'triangle', label: 'Triangle', symbol: '▲' },
-      { key: 'rectangle', label: 'Rectangle', symbol: '▬' },
-      { key: 'hexagon', label: 'Hexagon', symbol: '⬢' },
-      { key: 'pentagon', label: 'Pentagon', symbol: '⬟' },
-      { key: 'heptagon', label: '7-side', symbol: '7' },
-      { key: 'octagon', label: '8-side', symbol: '8' },
+      { key: 'circle', label: 'Circle' },
+      { key: 'square', label: 'Square' },
+      { key: 'triangle', label: 'Triangle' },
+      { key: 'rectangle', label: 'Rectangle' },
+      { key: 'hexagon', label: 'Hexagon' },
+      { key: 'pentagon', label: 'Pentagon' },
     ];
 
     function shuffle(arr) {
@@ -43,6 +41,13 @@
       return copy;
     }
 
+    function addShapeGlyph(button, shapeKey) {
+      const glyph = document.createElement('span');
+      glyph.className = `shape-glyph shape-glyph-${shapeKey}`;
+      glyph.setAttribute('aria-hidden', 'true');
+      button.appendChild(glyph);
+    }
+
     function renderRound() {
       shapesWrap.innerHTML = '';
       basketsWrap.innerHTML = '';
@@ -52,14 +57,15 @@
       let solved = 0;
 
       const activeTypes = shuffle(shapePool).slice(0, 3);
-      const shapes = shuffle([...activeTypes, ...activeTypes]); // 6 boxes
+      const shapes = shuffle([...activeTypes, ...activeTypes]);
 
       shapes.forEach((shapeDef) => {
         const b = document.createElement('button');
-        b.className = `shape ${shapeDef.key}`;
+        b.className = `shape tile-${shapeDef.key}`;
         b.dataset.shape = shapeDef.key;
-        b.textContent = shapeDef.symbol;
         b.type = 'button';
+        b.setAttribute('aria-label', shapeDef.label);
+        addShapeGlyph(b, shapeDef.key);
         b.addEventListener('click', () => {
           if (b.classList.contains('matched')) return;
           selected = b;
@@ -74,7 +80,14 @@
         basket.className = 'basket';
         basket.dataset.basket = shapeDef.key;
         basket.type = 'button';
-        basket.textContent = shapeDef.label;
+        basket.setAttribute('aria-label', `${shapeDef.label} basket`);
+        const preview = document.createElement('span');
+        preview.className = `basket-glyph shape-glyph shape-glyph-${shapeDef.key}`;
+        preview.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.className = 'basket-label';
+        label.textContent = shapeDef.label;
+        basket.append(preview, label);
         basket.addEventListener('click', () => {
           if (!selected) return;
           if (selected.dataset.shape === basket.dataset.basket) {
@@ -109,63 +122,143 @@
 
 <style>
   .game {
-    background:#f5f0ff;
-    padding:1rem;
-    border-radius:14px;
-    border:2px solid #6f4caf;
-    color:#24153f;
+    background: #f5f0ff;
+    padding: 1rem;
+    border-radius: 14px;
+    border: 2px solid #6f4caf;
+    color: #24153f;
     text-align: center;
   }
-  .shape-row, .basket-row {
-    display:grid;
+
+  .shape-row,
+  .basket-row {
+    display: grid;
     grid-template-columns: repeat(3, minmax(90px, 1fr));
-    gap:.8rem;
+    gap: 0.8rem;
     max-width: 420px;
-    margin:.8rem auto;
+    margin: 0.8rem auto;
     justify-content: center;
   }
+
   :global(.shape) {
     all: unset;
     box-sizing: border-box;
     width: 100%;
     aspect-ratio: 1 / 1;
-    border:2px solid #364;
-    background:#9bd6ff;
-    color:#163;
-    font-size: clamp(2.8rem, 11vw, 4rem);
-    font-weight:800;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    border: 2px solid #6f4caf;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     border-radius: 14px;
-    line-height: 1;
+    padding: 0;
   }
-  :global(.shape.circle) { border-radius:50%; }
-  :global(.shape.square) { border-radius:14px; }
-  :global(.shape.triangle) { background:#ffa3a3; color:#631717; }
-  :global(.shape.rectangle) { border-radius:10px; }
-  :global(.shape.hexagon), :global(.shape.pentagon), :global(.shape.heptagon), :global(.shape.octagon) {
-    background:#ffe7a6;
-    color:#4c3400;
+
+  :global(.shape-glyph) {
+    display: block;
+    flex-shrink: 0;
   }
+
+  /* Proper shapes at 80% of the tile */
+  :global(.shape .shape-glyph) {
+    width: 80%;
+    height: 80%;
+  }
+
+  :global(.shape-glyph-circle) {
+    border-radius: 50%;
+    background: #4dabf7;
+    border: 3px solid #1864ab;
+  }
+
+  :global(.shape-glyph-square) {
+    width: 80%;
+    height: 80%;
+    background: #69db7c;
+    border: 3px solid #2f9e44;
+    border-radius: 4px;
+  }
+
+  :global(.shape-glyph-triangle) {
+    width: 80%;
+    height: 80%;
+    background: #ff8787;
+    border: none;
+    clip-path: polygon(50% 6%, 6% 94%, 94% 94%);
+  }
+
+  :global(.shape-glyph-rectangle) {
+    width: 80%;
+    height: 52%;
+    background: #ffa94d;
+    border: 3px solid #e8590c;
+    border-radius: 4px;
+  }
+
+  :global(.shape-glyph-pentagon) {
+    width: 80%;
+    height: 80%;
+    background: #ffd43b;
+    border: none;
+    clip-path: polygon(50% 4%, 96% 38%, 78% 92%, 22% 92%, 4% 38%);
+  }
+
+  :global(.shape-glyph-hexagon) {
+    width: 80%;
+    height: 80%;
+    background: #da77f2;
+    border: none;
+    clip-path: polygon(50% 4%, 92% 27%, 92% 73%, 50% 96%, 8% 73%, 8% 27%);
+  }
+
   :global(.shape.matched) {
-    background: #7be08e !important;
-    color: #10361c !important;
+    background: #e8ffe8;
     border-color: #24763b;
   }
+
+  :global(.shape.matched .shape-glyph) {
+    filter: brightness(1.05);
+    box-shadow: 0 0 0 3px #7be08e;
+  }
+
   .basket {
-    border:2px solid #6f4caf;
-    background:#fff;
-    border-radius:12px;
-    padding:1rem .7rem;
+    border: 2px solid #6f4caf;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0.65rem 0.5rem;
     width: 100%;
-    min-height: 64px;
-    font-size: clamp(1.3rem, 5.6vw, 1.65rem);
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+
+  :global(.basket .shape-glyph) {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  :global(.basket .shape-glyph-rectangle) {
+    width: 2.4rem;
+    height: 1.35rem;
+  }
+
+  .basket-label {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
     line-height: 1.1;
     font-weight: 700;
+    color: #24153f;
   }
-  .reload-wrap { margin-top: 1rem; text-align: center; }
+
+  .reload-wrap {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
   .reload-btn {
     border: 2px solid #2f6f4e;
     background: #2f6f4e;
@@ -175,6 +268,7 @@
     font-weight: 700;
     cursor: pointer;
   }
+
   [data-msg] {
     min-height: 1.6em;
     font-size: clamp(1.15rem, 4.8vw, 1.4rem);
