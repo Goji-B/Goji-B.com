@@ -14,48 +14,11 @@
 
 <script>
   import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+  import { isShape3D, renderShapeGlyph } from '../../lib/shapeGlyphs';
 
   const VISIBLE_COUNT = 6;
   const SET_ADVANCE_MS = 1400;
   const PROMPT_DELAY_MS = 320;
-
-  /** Flat 2D vs isometric 3D — distinct SVG art per shape */
-  const SHAPE_SVG = {
-    circle:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="38" fill="#4dabf7" stroke="#1864ab" stroke-width="3"/></svg>',
-    oval:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="50" cy="50" rx="42" ry="26" fill="#74c0fc" stroke="#1864ab" stroke-width="3"/></svg>',
-    square:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="22" y="22" width="56" height="56" rx="2" fill="#69db7c" stroke="#2f9e44" stroke-width="3"/></svg>',
-    rectangle:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="6" y="34" width="88" height="32" rx="2" fill="#ffa94d" stroke="#e8590c" stroke-width="3"/></svg>',
-    triangle:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,12 90,88 10,88" fill="#ff8787" stroke="#c92a2a" stroke-width="3" stroke-linejoin="round"/></svg>',
-    diamond:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,8 92,50 50,92 8,50" fill="#ff6b9d" stroke="#c2255c" stroke-width="3" stroke-linejoin="round"/></svg>',
-    pentagon:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,6 94,38 78,92 22,92 6,38" fill="#ffd43b" stroke="#e67700" stroke-width="3" stroke-linejoin="round"/></svg>',
-    hexagon:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,6 92,28 92,72 50,94 8,72 8,28" fill="#da77f2" stroke="#9c36b5" stroke-width="3" stroke-linejoin="round"/></svg>',
-    octagon:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="32,6 68,6 94,32 94,68 68,94 32,94 6,68 6,32" fill="#a9e34b" stroke="#5c940d" stroke-width="3" stroke-linejoin="round"/></svg>',
-    star:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 61,36 96,36 68,56 79,92 50,72 21,92 32,56 4,36 39,36" fill="#fcc419" stroke="#e67700" stroke-width="2.5" stroke-linejoin="round"/></svg>',
-    sphere:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="sg-sphere" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#fff"/><stop offset="35%" stop-color="#91a7ff"/><stop offset="100%" stop-color="#364fc7"/></radialGradient></defs><ellipse cx="50" cy="88" rx="28" ry="6" fill="#364fc7" opacity=".25"/><circle cx="50" cy="48" r="36" fill="url(#sg-sphere)" stroke="#364fc7" stroke-width="3"/><ellipse cx="38" cy="34" rx="10" ry="6" fill="#fff" opacity=".55"/></svg>',
-    cube:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,14 78,30 50,46 22,30" fill="#c0eb75" stroke="#5c940d" stroke-width="2" stroke-linejoin="round"/><polygon points="22,30 50,46 50,78 22,62" fill="#94d82a" stroke="#5c940d" stroke-width="2" stroke-linejoin="round"/><polygon points="50,46 78,30 78,62 50,78" fill="#5c940d" stroke="#3b5c0d" stroke-width="2" stroke-linejoin="round"/></svg>',
-    cuboid:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="14,34 70,34 78,26 22,26" fill="#b2f2ff" stroke="#2f6f9e" stroke-width="2" stroke-linejoin="round"/><polygon points="14,34 22,26 22,70 14,78" fill="#66d9e8" stroke="#2f6f9e" stroke-width="2" stroke-linejoin="round"/><polygon points="70,34 78,26 78,70 70,78" fill="#3bc9db" stroke="#1864ab" stroke-width="2" stroke-linejoin="round"/><polygon points="14,34 70,34 70,78 14,78" fill="#15aabf" stroke="#1864ab" stroke-width="2" stroke-linejoin="round"/></svg>',
-    cylinder:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="sg-cyl" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#364fc7"/><stop offset="50%" stop-color="#91a7ff"/><stop offset="100%" stop-color="#364fc7"/></linearGradient></defs><ellipse cx="50" cy="78" rx="26" ry="9" fill="#364fc7" stroke="#212529" stroke-width="2"/><rect x="24" y="28" width="52" height="50" fill="url(#sg-cyl)" stroke="#364fc7" stroke-width="2"/><ellipse cx="50" cy="28" rx="26" ry="9" fill="#bac8ff" stroke="#364fc7" stroke-width="2"/><path d="M24 28 Q50 36 76 28" fill="none" stroke="#fff" stroke-width="2" opacity=".4"/></svg>',
-    cone:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="sg-cone" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="#ffc078"/><stop offset="100%" stop-color="#e8590c"/></linearGradient></defs><ellipse cx="50" cy="82" rx="30" ry="10" fill="#d9480f" stroke="#9c3600" stroke-width="2"/><polygon points="50,14 82,80 18,80" fill="url(#sg-cone)" stroke="#c92a2a" stroke-width="2" stroke-linejoin="round"/><polygon points="50,14 66,80 18,80" fill="#fd7e14" opacity=".45"/></svg>',
-    pyramid:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,88 14,72 86,72" fill="#e67700" stroke="#9c3600" stroke-width="2" stroke-linejoin="round"/><polygon points="50,88 86,72 50,12" fill="#fab005" stroke="#e67700" stroke-width="2" stroke-linejoin="round"/><polygon points="50,88 14,72 50,12" fill="#f59f00" stroke="#e67700" stroke-width="2" stroke-linejoin="round"/><polygon points="14,72 50,12 86,72" fill="#ffd43b" stroke="#e67700" stroke-width="2" stroke-linejoin="round" opacity=".35"/></svg>',
-    prism:
-      '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="28,72 72,72 50,88" fill="#0ca678" stroke="#087f5b" stroke-width="2" stroke-linejoin="round"/><polygon points="28,72 50,28 72,72" fill="#63e6be" stroke="#087f5b" stroke-width="2" stroke-linejoin="round"/><polygon points="50,28 72,72 88,58 66,14" fill="#38d9a9" stroke="#087f5b" stroke-width="2" stroke-linejoin="round"/><polygon points="50,28 28,72 14,58 36,14" fill="#20c997" stroke="#087f5b" stroke-width="2" stroke-linejoin="round"/><line x1="50" y1="28" x2="66" y2="14" stroke="#087f5b" stroke-width="2"/><line x1="66" y1="14" x2="88" y2="58" stroke="#087f5b" stroke-width="2"/><line x1="88" y1="58" x2="72" y2="72" stroke="#087f5b" stroke-width="2"/></svg>',
-  };
 
   const SHAPE_POOL = [
     { key: 'circle', label: 'Circle' },
@@ -115,19 +78,11 @@
       return shuffle(SHAPE_POOL).slice(0, VISIBLE_COUNT);
     }
 
-    function shapeSvgHtml(shapeKey) {
-      const raw = SHAPE_SVG[shapeKey] ?? SHAPE_SVG.circle;
-      const uid = `${shapeKey}-${Math.random().toString(36).slice(2, 9)}`;
-      return raw
-        .replace(/\bid="sg-([^"]+)"/g, `id="sg-$1-${uid}"`)
-        .replace(/url\(#sg-([^)]+)\)/g, `url(#sg-$1-${uid})`);
-    }
-
     function addGlyph(button, shapeKey) {
       const glyph = document.createElement('span');
       glyph.className = `shape-glyph shape-glyph-${shapeKey}`;
       glyph.setAttribute('aria-hidden', 'true');
-      glyph.innerHTML = shapeSvgHtml(shapeKey);
+      glyph.innerHTML = renderShapeGlyph(shapeKey);
       button.appendChild(glyph);
     }
 
@@ -137,6 +92,7 @@
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'shape-tile';
+        if (isShape3D(def.key)) b.dataset.dim = '3d';
         b.dataset.shape = def.key;
         b.setAttribute('aria-label', def.label);
         addGlyph(b, def.key);
@@ -456,29 +412,28 @@
     color: #4a2878;
   }
 
+  :global(.shape-tile) {
+    overflow: visible;
+  }
+
   :global(.shape-glyph) {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    width: 80%;
-    height: 80%;
+    width: 58%;
+    height: 58%;
+    pointer-events: none;
   }
 
   :global(.shape-glyph svg) {
     width: 100%;
     height: 100%;
     display: block;
+    overflow: visible;
   }
 
-  /* 3D tiles: slightly taller slot so solids read clearly */
-  :global(.shape-tile:has(.shape-glyph-sphere)),
-  :global(.shape-tile:has(.shape-glyph-cube)),
-  :global(.shape-tile:has(.shape-glyph-cuboid)),
-  :global(.shape-tile:has(.shape-glyph-cylinder)),
-  :global(.shape-tile:has(.shape-glyph-cone)),
-  :global(.shape-tile:has(.shape-glyph-pyramid)),
-  :global(.shape-tile:has(.shape-glyph-prism)) {
-    background: linear-gradient(180deg, #fff 0%, #f0f4ff 100%);
+  :global(.shape-tile[data-dim='3d']) {
+    background: linear-gradient(180deg, #fff 0%, #eef3ff 100%);
   }
 </style>
