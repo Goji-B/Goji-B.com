@@ -1,41 +1,62 @@
 <section class="game" data-shape-root data-music-theme="dreamy">
   <h2>Shape Sorter</h2>
-  <p>Tap a shape, then tap the matching basket.</p>
-  <div class="shape-row" data-shapes></div>
-  <div class="basket-row" data-baskets></div>
-  <p data-msg aria-live="polite"></p>
-  <p class="reload-wrap" data-reload-wrap hidden>
-    <button class="reload-btn" data-reload type="button">Reload Activity</button>
+  <p class="listen-hint" data-hint>Listen, then tap the shape you hear.</p>
+  <p class="listen-pulse" data-listen aria-live="polite">
+    <span class="ear" aria-hidden="true">👂</span>
+    <span class="listen-label" data-listen-label>Tap Start</span>
   </p>
+  <p class="feedback" data-feedback aria-live="assertive"></p>
+  <div class="shape-grid" data-grid></div>
+  <p class="progress">★ <strong data-score>0</strong> / <span data-total>8</span></p>
+  <p class="next-wrap" data-next-wrap hidden>
+    <button class="next-btn" data-next type="button">Again!</button>
+  </p>
+  <button class="start-btn" data-start type="button">Start</button>
 </section>
 
 <script>
   import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+
+  const SHAPE_POOL = [
+    { key: 'circle', label: 'Circle' },
+    { key: 'triangle', label: 'Triangle' },
+    { key: 'rectangle', label: 'Rectangle' },
+    { key: 'square', label: 'Square' },
+    { key: 'pentagon', label: 'Pentagon' },
+    { key: 'hexagon', label: 'Hexagon' },
+    { key: 'cone', label: 'Cone' },
+    { key: 'cylinder', label: 'Cylinder' },
+    { key: 'prism', label: 'Prism' },
+    { key: 'cube', label: 'Cube' },
+  ];
+
+  const ROUNDS_PER_GAME = 8;
+  const ADVANCE_MS = 1100;
 
   function initShape() {
     const root = document.querySelector('[data-shape-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
     bindActivityUnlock(root, 'dreamy');
-    const shapesWrap = root.querySelector('[data-shapes]');
-    const basketsWrap = root.querySelector('[data-baskets]');
-    const msg = root.querySelector('[data-msg]');
-    const reloadWrap = root.querySelector('[data-reload-wrap]');
-    const reloadBtn = root.querySelector('[data-reload]');
 
-    /** Only these shapes — no others for now. */
-    const shapePool = [
-      { key: 'circle', label: 'Circle' },
-      { key: 'triangle', label: 'Triangle' },
-      { key: 'rectangle', label: 'Rectangle' },
-      { key: 'square', label: 'Square' },
-      { key: 'pentagon', label: 'Pentagon' },
-      { key: 'hexagon', label: 'Hexagon' },
-      { key: 'cone', label: 'Cone' },
-      { key: 'cylinder', label: 'Cylinder' },
-      { key: 'prism', label: 'Prism' },
-      { key: 'cube', label: 'Cube' },
-    ];
+    const grid = root.querySelector('[data-grid]');
+    const feedback = root.querySelector('[data-feedback]');
+    const listenLabel = root.querySelector('[data-listen-label]');
+    const listenBox = root.querySelector('[data-listen]');
+    const scoreEl = root.querySelector('[data-score]');
+    const totalEl = root.querySelector('[data-total]');
+    const startBtn = root.querySelector('[data-start]');
+    const nextWrap = root.querySelector('[data-next-wrap]');
+    const nextBtn = root.querySelector('[data-next]');
+
+    const tileByKey = new Map();
+    let queue = [];
+    let queueIndex = 0;
+    let score = 0;
+    let locked = false;
+    let playing = false;
+    let advanceTimer = null;
+    let speakTimer = null;
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -46,81 +67,168 @@
       return copy;
     }
 
-    function addShapeGlyph(button, shapeKey) {
+    function addGlyph(button, shapeKey) {
       const glyph = document.createElement('span');
       glyph.className = `shape-glyph shape-glyph-${shapeKey}`;
       glyph.setAttribute('aria-hidden', 'true');
       button.appendChild(glyph);
     }
 
-    function renderRound() {
-      shapesWrap.innerHTML = '';
-      basketsWrap.innerHTML = '';
-      reloadWrap.hidden = true;
-      msg.textContent = '';
-      let selected = null;
-      let solved = 0;
-
-      const activeTypes = shuffle(shapePool).slice(0, 3);
-      const shapes = shuffle([...activeTypes, ...activeTypes]);
-
-      shapes.forEach((shapeDef) => {
+    function buildGrid() {
+      grid.innerHTML = '';
+      tileByKey.clear();
+      SHAPE_POOL.forEach((def) => {
         const b = document.createElement('button');
-        b.className = `shape tile-${shapeDef.key}`;
-        b.dataset.shape = shapeDef.key;
         b.type = 'button';
-        b.setAttribute('aria-label', shapeDef.label);
-        addShapeGlyph(b, shapeDef.key);
-        b.addEventListener('click', () => {
-          if (b.classList.contains('matched')) return;
-          selected = b;
-          msg.textContent = shapeDef.label;
-          audio.speak(shapeDef.label);
-        });
-        shapesWrap.appendChild(b);
-      });
-
-      activeTypes.forEach((shapeDef) => {
-        const basket = document.createElement('button');
-        basket.className = 'basket';
-        basket.dataset.basket = shapeDef.key;
-        basket.type = 'button';
-        basket.setAttribute('aria-label', `${shapeDef.label} basket`);
-        const preview = document.createElement('span');
-        preview.className = `basket-glyph shape-glyph shape-glyph-${shapeDef.key}`;
-        preview.setAttribute('aria-hidden', 'true');
-        const label = document.createElement('span');
-        label.className = 'basket-label';
-        label.textContent = shapeDef.label;
-        basket.append(preview, label);
-        basket.addEventListener('click', () => {
-          if (!selected) return;
-          if (selected.dataset.shape === basket.dataset.basket) {
-            selected.classList.add('matched');
-            selected.disabled = true;
-            solved += 1;
-            selected = null;
-            msg.textContent = 'Yes!';
-            audio.speak('Yes!');
-            audio.playSfx('clink');
-            if (solved === shapes.length) {
-              msg.textContent = 'All done!';
-              audio.speak('All done!');
-              reloadWrap.hidden = false;
-            }
-          } else {
-            msg.textContent = 'Try again!';
-            audio.speak('Try again!');
-            audio.playSfx('buzz');
-          }
-        });
-        basketsWrap.appendChild(basket);
+        b.className = 'shape-tile';
+        b.dataset.shape = def.key;
+        b.setAttribute('aria-label', def.label);
+        addGlyph(b, def.key);
+        b.addEventListener('click', () => onTileClick(b, def));
+        grid.appendChild(b);
+        tileByKey.set(def.key, b);
       });
     }
 
-    reloadBtn.addEventListener('click', renderRound);
-    renderRound();
+    function clearTileStates() {
+      tileByKey.forEach((tile) => {
+        tile.disabled = false;
+        tile.classList.remove('correct', 'wrong', 'want');
+      });
+    }
+
+    function speakShape(label, delayMs = 0) {
+      if (speakTimer) clearTimeout(speakTimer);
+      const run = () => {
+        listenBox.classList.add('speaking');
+        listenLabel.textContent = '…';
+        audio.speak(label);
+        window.setTimeout(() => {
+          listenBox.classList.remove('speaking');
+          listenLabel.textContent = 'Listen…';
+        }, 400);
+      };
+      if (delayMs > 0) speakTimer = window.setTimeout(run, delayMs);
+      else run();
+    }
+
+    function currentTarget() {
+      return queue[queueIndex];
+    }
+
+    function promptNext() {
+      if (queueIndex >= queue.length) {
+        finishGame();
+        return;
+      }
+      const def = currentTarget();
+      locked = false;
+      clearTileStates();
+      feedback.textContent = '';
+      speakShape(def.label, 280);
+    }
+
+    function onTileClick(tile, def) {
+      if (!playing || locked) return;
+      audio.unlock();
+
+      const target = currentTarget();
+      if (!target) return;
+
+      if (def.key === target.key) {
+        locked = true;
+        tile.classList.add('correct');
+        tileByKey.forEach((t) => {
+          t.disabled = true;
+        });
+        score += 1;
+        scoreEl.textContent = String(score);
+        feedback.textContent = 'Yay!';
+        audio.speak('Yay!');
+        audio.playSfx('clink');
+        root.classList.add('round-win');
+        queueIndex += 1;
+        advanceTimer = window.setTimeout(() => {
+          root.classList.remove('round-win');
+          promptNext();
+        }, ADVANCE_MS);
+      } else {
+        tile.classList.remove('wrong');
+        void tile.offsetWidth;
+        tile.classList.add('wrong');
+        feedback.textContent = '';
+        audio.playSfx('buzz');
+        speakShape(target.label, 200);
+      }
+    }
+
+    function finishGame() {
+      playing = false;
+      locked = true;
+      startBtn.hidden = false;
+      nextWrap.hidden = false;
+      listenLabel.textContent = 'Done!';
+      feedback.textContent = '★ ★ ★';
+      audio.speak('Yay!');
+      audio.playSfx('success');
+      root.classList.add('all-done');
+      tileByKey.forEach((t) => {
+        t.disabled = true;
+        t.classList.add('correct');
+      });
+    }
+
+    function startGame() {
+      if (advanceTimer) clearTimeout(advanceTimer);
+      if (speakTimer) clearTimeout(speakTimer);
+      audio.stopAll();
+      if (audio.musicOn) audio.startMusic('dreamy');
+
+      playing = true;
+      locked = true;
+      score = 0;
+      queueIndex = 0;
+      scoreEl.textContent = '0';
+      totalEl.textContent = String(ROUNDS_PER_GAME);
+      feedback.textContent = '';
+      startBtn.hidden = true;
+      nextWrap.hidden = true;
+      root.classList.remove('all-done', 'round-win');
+
+      const picks = shuffle(SHAPE_POOL).slice(0, ROUNDS_PER_GAME);
+      queue = picks;
+      clearTileStates();
+      listenLabel.textContent = 'Listen…';
+      promptNext();
+    }
+
+    function resetUI() {
+      playing = false;
+      locked = false;
+      if (advanceTimer) clearTimeout(advanceTimer);
+      if (speakTimer) clearTimeout(speakTimer);
+      startBtn.hidden = false;
+      nextWrap.hidden = true;
+      listenLabel.textContent = 'Tap Start';
+      feedback.textContent = '';
+      root.classList.remove('all-done', 'round-win');
+      clearTileStates();
+    }
+
+    startBtn.addEventListener('click', () => {
+      audio.unlock();
+      startGame();
+    });
+    nextBtn.addEventListener('click', () => {
+      audio.unlock();
+      resetUI();
+      startGame();
+    });
+
+    buildGrid();
+    resetUI();
   }
+
   initShape();
   document.addEventListener('astro:page-load', initShape);
 </script>
@@ -135,17 +243,70 @@
     text-align: center;
   }
 
-  .shape-row,
-  .basket-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(90px, 1fr));
-    gap: 0.8rem;
-    max-width: 420px;
-    margin: 0.8rem auto;
-    justify-content: center;
+  .listen-hint {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 600;
   }
 
-  :global(.shape) {
+  .listen-pulse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin: 0 0 0.5rem;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 2px solid #9b6fd4;
+    min-height: 2.2rem;
+  }
+
+  .listen-pulse.speaking {
+    background: #ede4ff;
+    animation: listen-pop 0.5s ease;
+  }
+
+  .ear {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .listen-label {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #4a2878;
+  }
+
+  @keyframes listen-pop {
+    0% {
+      transform: scale(0.95);
+    }
+    50% {
+      transform: scale(1.04);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .feedback {
+    min-height: 1.5rem;
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1f6b3a;
+  }
+
+  .shape-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(58px, 1fr));
+    gap: 0.5rem;
+    max-width: 440px;
+    margin: 0.5rem auto;
+  }
+
+  :global(.shape-tile) {
     all: unset;
     box-sizing: border-box;
     width: 100%;
@@ -156,87 +317,133 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 0;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
 
+  :global(.shape-tile:disabled) {
+    cursor: default;
+  }
+
+  :global(.shape-tile.want) {
+    box-shadow: 0 0 0 3px #ffd54a;
+  }
+
+  :global(.shape-tile.correct) {
+    background: #e8ffe8;
+    border-color: #2f9e44;
+  }
+
+  :global(.shape-tile.wrong) {
+    animation: tile-shake 0.4s ease;
+  }
+
+  @keyframes tile-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25%,
+    75% {
+      transform: translateX(-4px);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+  }
+
+  .game.round-win {
+    background: #efe8ff;
+  }
+
+  .game.all-done {
+    background: linear-gradient(180deg, #fff9e6 0%, #efe8ff 100%);
+  }
+
+  .progress {
+    margin: 0.4rem 0 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .start-btn,
+  .next-btn {
+    border: 2px solid #2f6f4e;
+    background: #2f6f4e;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.55rem 1.35rem;
+    font-weight: 800;
+    font-size: 1.05rem;
+    cursor: pointer;
+  }
+
+  .next-wrap {
+    margin: 0.35rem 0 0.5rem;
+  }
+
+  /* Shape glyphs ~75% of tile */
   :global(.shape-glyph) {
     display: block;
     flex-shrink: 0;
   }
 
-  /* Proper shapes at 80% of the tile */
-  :global(.shape .shape-glyph) {
-    width: 80%;
-    height: 80%;
+  :global(.shape-tile .shape-glyph) {
+    width: 75%;
+    height: 75%;
   }
 
   :global(.shape-glyph-circle) {
     border-radius: 50%;
     background: #4dabf7;
-    border: 3px solid #1864ab;
+    border: 2px solid #1864ab;
   }
 
   :global(.shape-glyph-square) {
-    width: 80%;
-    height: 80%;
     background: #69db7c;
-    border: 3px solid #2f9e44;
-    border-radius: 4px;
+    border: 2px solid #2f9e44;
+    border-radius: 3px;
   }
 
   :global(.shape-glyph-triangle) {
-    width: 80%;
-    height: 80%;
     background: #ff8787;
-    border: none;
     clip-path: polygon(50% 6%, 6% 94%, 94% 94%);
   }
 
   :global(.shape-glyph-rectangle) {
-    width: 80%;
-    height: 52%;
+    width: 75%;
+    height: 48%;
     background: #ffa94d;
-    border: 3px solid #e8590c;
-    border-radius: 4px;
+    border: 2px solid #e8590c;
+    border-radius: 3px;
   }
 
   :global(.shape-glyph-pentagon) {
-    width: 80%;
-    height: 80%;
     background: #ffd43b;
-    border: none;
     clip-path: polygon(50% 4%, 96% 38%, 78% 92%, 22% 92%, 4% 38%);
   }
 
   :global(.shape-glyph-hexagon) {
-    width: 80%;
-    height: 80%;
     background: #da77f2;
-    border: none;
     clip-path: polygon(50% 4%, 92% 27%, 92% 73%, 50% 96%, 8% 73%, 8% 27%);
   }
 
-  /* 3D-style shapes at ~80% of tile */
   :global(.shape-glyph-cone) {
-    width: 72%;
-    height: 80%;
     position: relative;
+    width: 70%;
+    height: 75%;
   }
 
   :global(.shape-glyph-cone::before) {
     content: '';
     position: absolute;
     left: 50%;
-    top: 2%;
+    top: 0;
     transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-left: 36% solid transparent;
-    border-right: 36% solid transparent;
-    border-bottom: 62% solid #ff922b;
-    border-top: 0;
+    border-left: 38% solid transparent;
+    border-right: 38% solid transparent;
+    border-bottom: 60% solid #ff922b;
   }
 
   :global(.shape-glyph-cone::after) {
@@ -245,20 +452,20 @@
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 78%;
-    height: 16%;
+    width: 76%;
+    height: 14%;
     background: #fd7e14;
-    border: 3px solid #e8590c;
+    border: 2px solid #e8590c;
     border-radius: 50%;
   }
 
   :global(.shape-glyph-cylinder) {
-    width: 52%;
-    height: 80%;
     position: relative;
-    background: linear-gradient(90deg, #4c6ef5 0%, #91a7ff 48%, #364fc7 100%);
-    border: 3px solid #364fc7;
-    border-radius: 8px;
+    width: 48%;
+    height: 75%;
+    background: linear-gradient(90deg, #4c6ef5, #91a7ff, #364fc7);
+    border: 2px solid #364fc7;
+    border-radius: 6px;
   }
 
   :global(.shape-glyph-cylinder::before),
@@ -267,25 +474,23 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: 112%;
-    height: 22%;
-    border: 3px solid #364fc7;
+    width: 110%;
+    height: 20%;
+    border: 2px solid #364fc7;
     border-radius: 50%;
   }
 
   :global(.shape-glyph-cylinder::before) {
-    top: -11%;
+    top: -10%;
     background: #bac8ff;
   }
 
   :global(.shape-glyph-cylinder::after) {
-    bottom: -9%;
+    bottom: -8%;
     background: #5c7cfa;
   }
 
   :global(.shape-glyph-prism) {
-    width: 76%;
-    height: 80%;
     position: relative;
   }
 
@@ -295,7 +500,7 @@
     inset: 0;
     clip-path: polygon(50% 6%, 94% 92%, 6% 92%);
     background: #63e6be;
-    border: 3px solid #0ca678;
+    border: 2px solid #0ca678;
   }
 
   :global(.shape-glyph-prism::after) {
@@ -307,10 +512,10 @@
   }
 
   :global(.shape-glyph-cube) {
-    width: 58%;
-    height: 58%;
     position: relative;
-    margin-top: 6%;
+    width: 54%;
+    height: 54%;
+    margin-top: 4%;
   }
 
   :global(.shape-glyph-cube::before),
@@ -319,8 +524,8 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    border: 3px solid #5c940d;
-    border-radius: 4px;
+    border: 2px solid #5c940d;
+    border-radius: 3px;
   }
 
   :global(.shape-glyph-cube::before) {
@@ -330,97 +535,7 @@
 
   :global(.shape-glyph-cube::after) {
     background: #c0eb75;
-    transform: rotate(-28deg) skewX(-18deg) translate(22%, -24%);
+    transform: rotate(-28deg) skewX(-18deg) translate(20%, -22%);
     z-index: -1;
-  }
-
-  :global(.shape.matched) {
-    background: #e8ffe8;
-    border-color: #24763b;
-  }
-
-  :global(.shape.matched .shape-glyph) {
-    filter: brightness(1.05);
-    box-shadow: 0 0 0 3px #7be08e;
-  }
-
-  .basket {
-    border: 2px solid #6f4caf;
-    background: #fff;
-    border-radius: 12px;
-    padding: 0.65rem 0.5rem;
-    width: 100%;
-    min-height: 72px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    cursor: pointer;
-  }
-
-  :global(.basket .shape-glyph) {
-    width: 2rem;
-    height: 2rem;
-  }
-
-  :global(.basket .shape-glyph-rectangle) {
-    width: 2.4rem;
-    height: 1.35rem;
-  }
-
-  :global(.basket .shape-glyph-cone::before) {
-    border-left-width: 0.85rem;
-    border-right-width: 0.85rem;
-    border-bottom-width: 1.35rem;
-  }
-
-  :global(.basket .shape-glyph-cone) {
-    width: 1.75rem;
-    height: 2rem;
-  }
-
-  :global(.basket .shape-glyph-cylinder) {
-    width: 1.25rem;
-    height: 2rem;
-  }
-
-  :global(.basket .shape-glyph-prism) {
-    width: 1.85rem;
-    height: 2rem;
-  }
-
-  :global(.basket .shape-glyph-cube) {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-
-  .basket-label {
-    font-size: clamp(0.95rem, 4vw, 1.15rem);
-    line-height: 1.1;
-    font-weight: 700;
-    color: #24153f;
-  }
-
-  .reload-wrap {
-    margin-top: 1rem;
-    text-align: center;
-  }
-
-  .reload-btn {
-    border: 2px solid #2f6f4e;
-    background: #2f6f4e;
-    color: #fff;
-    border-radius: 999px;
-    padding: 0.55rem 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  [data-msg] {
-    min-height: 1.6em;
-    font-size: clamp(1.15rem, 4.8vw, 1.4rem);
-    font-weight: 700;
-    margin-top: 0.55rem;
   }
 </style>
