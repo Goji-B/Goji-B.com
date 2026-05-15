@@ -1,4 +1,4 @@
-<section class="game" data-shape-root>
+<section class="game" data-shape-root data-music-theme="dreamy">
   <h2>Shape Sorter</h2>
   <p>Tap a shape, then tap the matching basket.</p>
   <div class="shape-row" data-shapes></div>
@@ -10,10 +10,13 @@
 </section>
 
 <script>
+  import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+
   function initShape() {
     const root = document.querySelector('[data-shape-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    bindActivityUnlock(root, 'dreamy');
     const shapesWrap = root.querySelector('[data-shapes]');
     const basketsWrap = root.querySelector('[data-baskets]');
     const msg = root.querySelector('[data-msg]');
@@ -60,7 +63,8 @@
         b.addEventListener('click', () => {
           if (b.classList.contains('matched')) return;
           selected = b;
-          msg.textContent = `Selected ${shapeDef.label}`;
+          msg.textContent = shapeDef.label;
+          audio.speak(shapeDef.label);
         });
         shapesWrap.appendChild(b);
       });
@@ -78,13 +82,18 @@
             selected.disabled = true;
             solved += 1;
             selected = null;
-            msg.textContent = 'Great match!';
+            msg.textContent = 'Yes!';
+            audio.speak('Yes!');
+            audio.playSfx('clink');
             if (solved === shapes.length) {
-              msg.textContent = 'Awesome! All shapes matched.';
+              msg.textContent = 'All done!';
+              audio.speak('All done!');
               reloadWrap.hidden = false;
             }
           } else {
-            msg.textContent = 'Oops, try another basket.';
+            msg.textContent = 'Try again!';
+            audio.speak('Try again!');
+            audio.playSfx('buzz');
           }
         });
         basketsWrap.appendChild(basket);

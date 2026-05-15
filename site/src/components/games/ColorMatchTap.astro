@@ -1,4 +1,4 @@
-<section class="game" data-color-root>
+<section class="game" data-color-root data-music-theme="marimba">
   <h2>Color Match Tap</h2>
   <p class="prompt" data-prompt aria-live="polite">
     <span class="prompt-icon" aria-hidden="true">👆</span>
@@ -13,10 +13,13 @@
 </section>
 
 <script>
+  import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+
   function initColorMatch() {
     const root = document.querySelector('[data-color-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    bindActivityUnlock(root, 'marimba');
 
     const btnWrap = root.querySelector('[data-buttons]');
     const targetEl = root.querySelector('[data-target]');
@@ -38,16 +41,6 @@
     let locked = false;
     let advanceTimer = null;
 
-    function speak(text) {
-      if (!window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'en-US';
-      utter.rate = 0.88;
-      utter.pitch = 1.05;
-      window.speechSynthesis.speak(utter);
-    }
-
     function setTargetDisplay(color) {
       target = color;
       targetEl.textContent = color.name;
@@ -57,7 +50,7 @@
         color.name === 'Yellow' ? '#c9a800' : color.hex;
       prompt.classList.add('speaking');
       window.setTimeout(() => prompt.classList.remove('speaking'), 600);
-      speak(color.name);
+      audio.speak(color.name);
     }
 
     function nextRound() {
@@ -96,14 +89,16 @@
               btn.disabled = true;
               btn.classList.add('correct');
             });
-            speak('Yay!');
+            audio.playSfx('pop');
+            audio.speak('Yay!');
             advanceTimer = window.setTimeout(nextRound, ADVANCE_MS);
           } else {
             b.classList.remove('wrong');
             void b.offsetWidth;
             b.classList.add('wrong');
             feedback.textContent = '';
-            speak(target.name);
+            audio.playSfx('wobble');
+            audio.speak(target.name);
           }
         });
 

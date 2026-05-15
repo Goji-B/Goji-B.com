@@ -1,4 +1,6 @@
 ---
+import ActivityAudioControls from '../components/activities/ActivityAudioControls.astro';
+
 const { title = "Activity" } = Astro.props;
 ---
 
@@ -50,6 +52,7 @@ const { title = "Activity" } = Astro.props;
       <div class="logo-wrap">
         <img class="logo" src="/gojiberry-banner-split.png" alt="Gojiberry banner" />
       </div>
+      <ActivityAudioControls />
       <slot />
     </main>
   </body>

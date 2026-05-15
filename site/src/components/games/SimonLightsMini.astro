@@ -1,4 +1,4 @@
-<section class="game" data-simon-root>
+<section class="game" data-simon-root data-music-theme="electronic">
   <h2>Simon Lights Mini</h2>
   <ol class="howto">
     <li>Press <strong>Start</strong>.</li>
@@ -16,18 +16,24 @@
 </section>
 
 <script>
+  import { audio, bindActivityUnlock, type SfxType } from '../../lib/activityAudio';
+
   function initSimon() {
     const root = document.querySelector('[data-simon-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    bindActivityUnlock(root, 'electronic');
     const msg = root.querySelector('[data-msg]');
     const pads = [...root.querySelectorAll('.pad')];
     const start = root.querySelector('[data-start]');
     let seq = [];
     let user = [];
     let playing = false;
+    const padSfx: SfxType[] = ['pad0', 'pad1', 'pad2', 'pad3'];
+
     function flash(i) {
       pads[i].classList.add('on');
+      audio.playSfx(padSfx[i]);
       setTimeout(() => pads[i].classList.remove('on'), 320);
     }
     function showSeq() {
@@ -38,11 +44,13 @@
       setTimeout(() => {
         playing = false;
         msg.textContent = `Your turn: tap step 1 of ${seq.length}`;
+        audio.speak('Your turn!');
       }, 620 * (seq.length + 1));
     }
     start.addEventListener('click', () => {
       seq.push(Math.floor(Math.random() * 4));
       msg.textContent = `Round ${seq.length}`;
+      audio.speak('Watch!');
       showSeq();
     });
     pads.forEach((p, idx) => p.addEventListener('click', () => {
@@ -51,9 +59,13 @@
       const pos = user.length - 1;
       if (user[pos] !== seq[pos]) {
         msg.textContent = 'Wrong order. Press Start to try a new game.';
+        audio.speak('Oops!');
+        audio.playSfx('fail');
         seq = [];
       } else if (user.length === seq.length) {
         msg.textContent = 'Great! Next round...';
+        audio.speak('Great!');
+        audio.playSfx('success');
         setTimeout(() => start.click(), 650);
       } else {
         msg.textContent = `Good. Now tap step ${user.length + 1} of ${seq.length}.`;

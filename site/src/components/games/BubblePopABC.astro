@@ -1,4 +1,4 @@
-<section class="game" data-bubble-root>
+<section class="game" data-bubble-root data-music-theme="bouncy">
   <h2>Bubble Pop ABC</h2>
   <p class="timer-line" data-timer-wrap hidden aria-label="Elapsed time">
     <span class="timer-icon" aria-hidden="true">⏱</span>
@@ -25,10 +25,13 @@
 </section>
 
 <script>
+  import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+
   function initBubble() {
     const root = document.querySelector('[data-bubble-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    bindActivityUnlock(root, 'bouncy');
 
     const row = root.querySelector('[data-row]');
     const feedback = root.querySelector('[data-feedback]');
@@ -134,6 +137,7 @@
       stageFrom.textContent = from;
       stageTo.textContent = to;
       updateStageAria(from, to);
+      audio.speak(from);
     }
 
     function advanceStage() {
@@ -172,7 +176,12 @@
             clearHint();
             b.disabled = true;
             b.classList.add('ok');
-            flashFeedback('cheer', target === 0 && stageStart === 0 ? 'Yay!' : '');
+            audio.playSfx('pop');
+            const cheer = target === 0 && stageStart === 0 ? 'Yay!' : '';
+            if (cheer) {
+              flashFeedback('cheer', cheer);
+              audio.speak(cheer);
+            }
 
             if (target === ordered.length - 1) {
               const finishedZ = ordered[ordered.length - 1] === 'Z';
@@ -187,10 +196,14 @@
                 feedback.textContent = '';
                 finale.hidden = false;
                 nextWrap.hidden = false;
+                audio.speak('Z!');
               } else {
                 advancing = true;
                 flashWin();
-                flashFeedback('cheer', pickStageWord());
+                audio.playSfx('sparkle');
+                const word = pickStageWord();
+                flashFeedback('cheer', word);
+                audio.speak(word);
                 window.setTimeout(advanceStage, ADVANCE_MS);
               }
             } else {
@@ -203,6 +216,7 @@
             b.classList.add('shake');
             setHint(ordered[target]);
             flashFeedback('hint-letter', ordered[target]);
+            audio.playSfx('boing');
           }
         });
 
@@ -213,6 +227,8 @@
     }
 
     function resetGame() {
+      audio.stopAll();
+      if (audio.musicOn) audio.startMusic('bouncy');
       stopTimer();
       startTime = null;
       stageStart = 0;

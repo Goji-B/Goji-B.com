@@ -1,4 +1,4 @@
-<section class="game" data-trace-root>
+<section class="game" data-trace-root data-music-theme="explore">
   <h2>Trace the Path</h2>
   <p data-msg aria-live="polite">Press Start. Watch the path. Then trace it.</p>
   <div class="path" data-path></div>
@@ -11,10 +11,13 @@
 </section>
 
 <script>
+  import { audio, bindActivityUnlock } from '../../lib/activityAudio';
+
   function initTrace() {
     const root = document.querySelector('[data-trace-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+    bindActivityUnlock(root, 'explore');
     const msg = root.querySelector('[data-msg]');
     const pathWrap = root.querySelector('[data-path]');
     const startBtn = root.querySelector('[data-start]');
@@ -83,6 +86,7 @@
         const d = dots[path[i]];
         d.classList.add('show');
         if (i === 0) d.classList.add('start');
+        audio.playSfx('blip');
         await wait(380);
         d.classList.remove('show');
       }
@@ -90,6 +94,7 @@
       showing = false;
       userIndex = 0;
       msg.textContent = `Your turn: trace from the green start dot. Step 1 of ${path.length}.`;
+      audio.speak('Go!');
     }
 
     function failRound() {
@@ -97,13 +102,17 @@
       if (wrong) wrong.classList.add('fail');
       pathWrap.classList.add('fail-all');
       msg.textContent = 'Oops! Wrong path. Press Reload to try again.';
+      audio.speak('Oops!');
+      audio.playSfx('buzz');
       reloadWrap.hidden = false;
       dragging = false;
     }
 
     function completeRound() {
       pathWrap.classList.add('success-all');
-      msg.textContent = 'Fantastic tracing! Press Reload for a new path.';
+      msg.textContent = 'Yay!';
+      audio.speak('Yay!');
+      audio.playSfx('success');
       reloadWrap.hidden = false;
       dragging = false;
     }
@@ -139,6 +148,7 @@
       path = generatePath(7);
       reloadWrap.hidden = true;
       msg.textContent = 'Watch carefully...';
+      audio.speak('Watch!');
       showPath();
     }
 

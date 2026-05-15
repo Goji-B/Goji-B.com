@@ -1,0 +1,73 @@
+<div class="audio-controls" data-audio-controls>
+  <button type="button" class="audio-btn" data-sound-toggle aria-pressed="true">Sound: On</button>
+  <button type="button" class="audio-btn" data-music-toggle aria-pressed="false">Music: Off</button>
+</div>
+
+<script>
+  import { audio } from '../../lib/activityAudio';
+
+  function initAudioControls() {
+    const bar = document.querySelector('[data-audio-controls]');
+    if (!bar || bar.dataset.init === '1') return;
+    bar.dataset.init = '1';
+
+    const soundBtn = bar.querySelector('[data-sound-toggle]');
+    const musicBtn = bar.querySelector('[data-music-toggle]');
+    if (!soundBtn || !musicBtn) return;
+
+    const refresh = () => {
+      soundBtn.textContent = audio.soundOn ? 'Sound: On' : 'Sound: Off';
+      musicBtn.textContent = audio.musicOn ? 'Music: On' : 'Music: Off';
+      soundBtn.setAttribute('aria-pressed', audio.soundOn ? 'true' : 'false');
+      musicBtn.setAttribute('aria-pressed', audio.musicOn ? 'true' : 'false');
+    };
+
+    soundBtn.addEventListener('click', () => {
+      audio.unlock();
+      audio.setSound(!audio.soundOn);
+      refresh();
+    });
+
+    musicBtn.addEventListener('click', () => {
+      audio.unlock();
+      audio.setMusic(!audio.musicOn);
+      refresh();
+      const themed = document.querySelector('[data-music-theme]');
+      const theme = themed?.getAttribute('data-music-theme');
+      if (theme && audio.musicOn) {
+        audio.startMusic(theme as import('../../lib/activityAudio').MusicTheme);
+      }
+    });
+
+    refresh();
+  }
+
+  initAudioControls();
+  document.addEventListener('astro:page-load', initAudioControls);
+</script>
+
+<style>
+  .audio-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.65rem;
+  }
+
+  .audio-btn {
+    border: 2px solid #2f6f4e;
+    background: #fff;
+    color: #1c3d28;
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .audio-btn[aria-pressed='true'] {
+    background: #2f6f4e;
+    color: #fff;
+  }
+</style>
