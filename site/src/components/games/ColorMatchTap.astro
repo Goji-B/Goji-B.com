@@ -1,71 +1,248 @@
-<section class="game">
+<section class="game" data-color-root>
   <h2>Color Match Tap</h2>
-  <p data-status>Tap the color: <strong data-target>Green</strong></p>
+  <p class="prompt" data-prompt aria-live="polite">
+    <span class="prompt-icon" aria-hidden="true">👆</span>
+    <span class="target-line">
+      <span class="target-swatch" data-swatch aria-hidden="true"></span>
+      <strong class="target-name" data-target>Green</strong>
+    </span>
+  </p>
+  <p class="feedback" data-feedback aria-live="assertive"></p>
   <div class="row" data-buttons></div>
-  <p>Score: <strong data-score>0</strong></p>
+  <p class="score-line">★ <strong data-score>0</strong></p>
 </section>
 
 <script>
   function initColorMatch() {
-    const root = document.querySelector('[data-buttons]')?.closest('.game');
+    const root = document.querySelector('[data-color-root]');
     if (!root || root.dataset.init === '1') return;
     root.dataset.init = '1';
+
     const btnWrap = root.querySelector('[data-buttons]');
     const targetEl = root.querySelector('[data-target]');
+    const swatchEl = root.querySelector('[data-swatch]');
     const scoreEl = root.querySelector('[data-score]');
-    const colors = ['Red', 'Blue', 'Green', 'Yellow'];
+    const feedback = root.querySelector('[data-feedback]');
+    const prompt = root.querySelector('[data-prompt]');
+
+    const colors = [
+      { name: 'Red', hex: '#e53935' },
+      { name: 'Blue', hex: '#1e88e5' },
+      { name: 'Green', hex: '#43a047' },
+      { name: 'Yellow', hex: '#fdd835' },
+    ];
+    const ADVANCE_MS = 1200;
+
     let score = 0;
+    let target = colors[0];
+    let locked = false;
+    let advanceTimer = null;
+
+    function speak(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'en-US';
+      utter.rate = 0.88;
+      utter.pitch = 1.05;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function setTargetDisplay(color) {
+      target = color;
+      targetEl.textContent = color.name;
+      targetEl.style.color = color.name === 'Yellow' ? '#5c4a00' : color.hex;
+      swatchEl.style.background = color.hex;
+      swatchEl.style.borderColor =
+        color.name === 'Yellow' ? '#c9a800' : color.hex;
+      prompt.classList.add('speaking');
+      window.setTimeout(() => prompt.classList.remove('speaking'), 600);
+      speak(color.name);
+    }
+
     function nextRound() {
-      const target = colors[Math.floor(Math.random() * colors.length)];
-      targetEl.textContent = target;
+      if (advanceTimer) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+      }
+      locked = false;
+      feedback.textContent = '';
+      root.classList.remove('round-win');
+
+      const pick = colors[Math.floor(Math.random() * colors.length)];
+      setTargetDisplay(pick);
+
       btnWrap.innerHTML = '';
       colors.forEach((c) => {
         const b = document.createElement('button');
-        b.textContent = c;
+        b.type = 'button';
         b.className = 'color-tile-btn';
-        b.style.background = c.toLowerCase();
+        b.style.background = c.hex;
+        b.setAttribute('aria-label', c.name);
+        if (c.name === 'Yellow') {
+          b.style.borderColor = '#c9a800';
+        }
+
         b.addEventListener('click', () => {
-          if (c === target) score += 1;
-          scoreEl.textContent = String(score);
-          nextRound();
+          if (locked) return;
+
+          if (c.name === target.name) {
+            locked = true;
+            score += 1;
+            scoreEl.textContent = String(score);
+            feedback.textContent = 'Yay!';
+            root.classList.add('round-win');
+            btnWrap.querySelectorAll('.color-tile-btn').forEach((btn) => {
+              btn.disabled = true;
+              btn.classList.add('correct');
+            });
+            speak('Yay!');
+            advanceTimer = window.setTimeout(nextRound, ADVANCE_MS);
+          } else {
+            b.classList.remove('wrong');
+            void b.offsetWidth;
+            b.classList.add('wrong');
+            feedback.textContent = '';
+            speak(target.name);
+          }
         });
+
         btnWrap.appendChild(b);
       });
     }
+
     nextRound();
   }
+
   initColorMatch();
   document.addEventListener('astro:page-load', initColorMatch);
 </script>
 
 <style>
-  .game { padding: 1rem; border-radius: 14px; background: #e9fff0; border: 2px solid #2f6f4e; color: #153224; }
-  .row {
-    display: grid;
-    grid-template-columns: repeat(2, 100px);
-    justify-content: center;
-    gap: 12px;
+  .game {
+    padding: 1rem;
+    border-radius: 14px;
+    background: #e9fff0;
+    border: 2px solid #2f6f4e;
+    color: #153224;
+    text-align: center;
+    transition: background 0.35s ease;
   }
-  :global(.color-tile-btn) {
-    all: unset;
-    box-sizing: border-box;
+
+  .game.round-win {
+    background: #dfffe8;
+  }
+
+  .prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .prompt-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  .target-line {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100px !important;
-    min-width: 100px !important;
-    max-width: 100px !important;
-    height: 100px !important;
-    min-height: 100px !important;
-    max-height: 100px !important;
+    gap: 0.65rem;
+  }
+
+  .target-swatch {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 3px solid #2f6f4e;
+    flex-shrink: 0;
+  }
+
+  .target-name {
+    font-size: clamp(2rem, 10vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.1;
+    transition: transform 0.25s ease;
+  }
+
+  .prompt.speaking .target-name {
+    animation: name-pop 0.55s ease;
+  }
+
+  @keyframes name-pop {
+    0% {
+      transform: scale(0.85);
+    }
+    60% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .feedback {
+    min-height: 1.6rem;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1f6b3a;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    justify-content: center;
+    gap: 12px;
+    max-width: 240px;
+    margin: 0.5rem auto;
+  }
+
+  .score-line {
+    margin: 0.65rem 0 0;
+    font-size: 1.15rem;
+  }
+
+  :global(.color-tile-btn) {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
     aspect-ratio: 1 / 1;
-    color: #fff;
-    border: 2px solid #2f6f4e;
-    border-radius: 12px;
+    border: 3px solid #2f6f4e;
+    border-radius: 14px;
     padding: 0;
-    font-weight: 700;
-    font-size: 1rem;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, .35);
     cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  :global(.color-tile-btn:disabled) {
+    cursor: default;
+  }
+
+  :global(.color-tile-btn.correct) {
+    box-shadow: 0 0 0 4px #7be08e;
+    transform: scale(1.03);
+  }
+
+  :global(.color-tile-btn.wrong) {
+    animation: tile-wrong 0.4s ease;
+  }
+
+  @keyframes tile-wrong {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25%,
+    75% {
+      transform: translateX(-5px);
+    }
+    50% {
+      transform: translateX(5px);
+    }
   }
 </style>
