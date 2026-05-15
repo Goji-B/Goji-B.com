@@ -2,9 +2,6 @@
   <h2>Find the Odd One</h2>
   <p data-msg aria-live="polite">Tap the one that is different.</p>
   <div class="grid" data-grid></div>
-  <p class="reload-wrap" data-reload-wrap hidden>
-    <button class="reload-btn" data-reload type="button">Reload Activity</button>
-  </p>
 </section>
 
 <script>
@@ -14,8 +11,6 @@
     root.dataset.init = '1';
     const grid = root.querySelector('[data-grid]');
     const msg = root.querySelector('[data-msg]');
-    const reloadWrap = root.querySelector('[data-reload-wrap]');
-    const reloadBtn = root.querySelector('[data-reload]');
     const sets = [
       ['🐶', '🐱'],
       ['🍎', '🍐'],
@@ -24,11 +19,20 @@
       ['🍊', '🍋'],
       ['🐸', '🐢'],
     ];
+    const ADVANCE_MS = 2000;
+
+    let locked = false;
+    let advanceTimer = null;
 
     function renderRound() {
+      if (advanceTimer) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+      }
+      locked = false;
       grid.innerHTML = '';
-      reloadWrap.hidden = true;
       msg.textContent = 'Tap the one that is different.';
+
       const picked = sets[Math.floor(Math.random() * sets.length)];
       const same = picked[0];
       const odd = picked[1];
@@ -39,73 +43,90 @@
         b.className = 'odd-cell';
         b.type = 'button';
         b.textContent = i === oddIndex ? odd : same;
+
         b.addEventListener('click', () => {
+          if (locked) return;
+
           if (i === oddIndex) {
-            b.classList.add('correct');
-            msg.textContent = 'You found it! Great eyes.';
-            reloadWrap.hidden = false;
+            locked = true;
+            grid.querySelectorAll('.odd-cell').forEach((cell) => {
+              cell.disabled = true;
+              cell.classList.add('correct');
+            });
+            msg.textContent = 'Yay!';
+            root.classList.add('round-win');
+            advanceTimer = window.setTimeout(() => {
+              root.classList.remove('round-win');
+              renderRound();
+            }, ADVANCE_MS);
           } else {
             b.classList.add('wrong');
-            msg.textContent = 'Not this one. Try again!';
+            msg.textContent = 'Try again!';
           }
         });
+
         grid.appendChild(b);
       }
     }
 
-    reloadBtn.addEventListener('click', renderRound);
     renderRound();
   }
+
   initOdd();
   document.addEventListener('astro:page-load', initOdd);
 </script>
 
 <style>
   .game {
-    background:#fffcee;
-    padding:1rem;
-    border-radius:14px;
-    border:2px solid #806f2c;
-    color:#2f2810;
+    background: #fffcee;
+    padding: 1rem;
+    border-radius: 14px;
+    border: 2px solid #806f2c;
+    color: #2f2810;
     text-align: center;
+    transition: background 0.35s ease;
   }
+
+  .game.round-win {
+    background: #e8ffe8;
+  }
+
   .grid {
-    display:grid;
-    grid-template-columns:repeat(3, minmax(90px, 1fr));
-    gap:.7rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(90px, 1fr));
+    gap: 0.7rem;
     max-width: 360px;
-    margin: .6rem auto 0;
+    margin: 0.6rem auto 0;
   }
+
   :global(.odd-cell) {
     all: unset;
     box-sizing: border-box;
     width: 100%;
     aspect-ratio: 1 / 1;
     font-size: clamp(2.4rem, 9vw, 3.4rem);
-    border-radius:12px;
-    border:2px solid #806f2c;
-    background:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    border-radius: 12px;
+    border: 2px solid #806f2c;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     line-height: 1;
+    transition: background 0.2s ease, border-color 0.2s ease;
   }
+
+  :global(.odd-cell:disabled) {
+    cursor: default;
+  }
+
   :global(.odd-cell.correct) {
-    background:#b9efc2;
-    border-color:#2a7f3d;
+    background: #7be08e;
+    border-color: #24763b;
   }
+
   :global(.odd-cell.wrong) {
-    background:#ffe4c9;
-  }
-  .reload-wrap { margin-top: 0.85rem; }
-  .reload-btn {
-    border:2px solid #2f6f4e;
-    background:#2f6f4e;
-    color:#fff;
-    border-radius:999px;
-    padding:.55rem 1.1rem;
-    font-weight:700;
-    cursor:pointer;
+    background: #ffe4c9;
+    border-color: #c97a3a;
   }
 </style>
