@@ -1,3 +1,5 @@
+import { morePlayConfigBySlug } from './gettingReadyPlayMore';
+
 export type PlayMode = 'prompts' | 'checklist' | 'pick-two' | 'counter' | 'spy';
 
 export interface PlayConfig {
@@ -261,10 +263,12 @@ export const playConfigBySlug: Record<string, PlayConfig> = {
   },
 };
 
+const allPlayConfigBySlug = { ...playConfigBySlug, ...morePlayConfigBySlug };
+
 export function getPlayConfig(slug: string): PlayConfig | undefined {
-  return playConfigBySlug[slug];
+  return allPlayConfigBySlug[slug];
 }
 
 export function usesPlayKit(slug: string): boolean {
-  return slug in playConfigBySlug;
+  return slug in allPlayConfigBySlug;
 }

@@ -93,10 +93,18 @@ if (!config) throw new Error(`No play config for ${game.slug}`);
       const category = root.dataset.category ?? 'indoor';
       list.hidden = false;
       main.hidden = true;
+      const checklistHints: Record<string, string> = {
+        car: 'Tap when you spot it from the car.',
+        outdoor: 'Tap when you find it outside.',
+        travel: 'Tap when you spot it while waiting.',
+        paper: 'Tap when finished on paper.',
+        nfc: 'Tap your Gojiberry tag, then tap when done.',
+        party: 'Tap when everyone did it!',
+        teamwork: 'Tap when the team finished together.',
+        seasonal: 'Tap when you did the seasonal fun.',
+      };
       msg.textContent =
-        category === 'car'
-          ? 'Tap when you spot it from the car.'
-          : 'Tap when you find it outside.';
+        checklistHints[category] ?? 'Tap each item when you finish it.';
       list.innerHTML = '';
       items.forEach((label, idx) => {
         const li = document.createElement('li');

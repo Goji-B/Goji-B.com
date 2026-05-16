@@ -1,6 +1,23 @@
 import type { MusicTheme } from '../lib/activityAudio';
+import { moreGettingReadyGames } from './gettingReadyGamesMore';
 
-export type GettingReadyCategory = 'indoor' | 'outdoor' | 'car';
+export type GettingReadyCategory =
+  | 'indoor'
+  | 'outdoor'
+  | 'car'
+  | 'paper'
+  | 'nfc'
+  | 'travel'
+  | 'party'
+  | 'calm'
+  | 'move'
+  | 'words'
+  | 'logic'
+  | 'seasonal'
+  | 'attention'
+  | 'math'
+  | 'teamwork'
+  | 'creativity';
 
 export interface GettingReadyGame {
   slug: string;
@@ -14,7 +31,7 @@ export interface GettingReadyGame {
   musicTheme: MusicTheme;
 }
 
-export const gettingReadyGames: GettingReadyGame[] = [
+const coreGettingReadyGames: GettingReadyGame[] = [
   {
     slug: 'memory-card-matching',
     title: 'Memory Card Matching',
@@ -314,6 +331,11 @@ export const gettingReadyGames: GettingReadyGame[] = [
     category: 'car',
     musicTheme: 'explore',
   },
+];
+
+export const gettingReadyGames: GettingReadyGame[] = [
+  ...coreGettingReadyGames,
+  ...moreGettingReadyGames,
 ];
 
 export function getGettingReadyGame(slug: string): GettingReadyGame | undefined {

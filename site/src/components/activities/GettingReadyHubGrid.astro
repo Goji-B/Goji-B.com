@@ -1,72 +1,42 @@
 ---
 import { gettingReadyGames } from '../../data/gettingReadyGames';
+import { gettingReadyHubSections } from '../../data/gettingReadyCategories';
 
-const featured = gettingReadyGames.filter((g) => g.mindPower);
-const indoor = gettingReadyGames.filter((g) => g.category === 'indoor' && !g.mindPower);
-const outdoor = gettingReadyGames.filter((g) => g.category === 'outdoor');
-const car = gettingReadyGames.filter((g) => g.category === 'car');
+function gamesForSection(section: (typeof gettingReadyHubSections)[number]) {
+  if (section.category === 'mindPower') {
+    return gettingReadyGames.filter((g) => g.mindPower);
+  }
+  return gettingReadyGames.filter((g) => g.category === section.category && !g.mindPower);
+}
 ---
 
 <section class="gr-hub">
   <p class="gr-intro">
-    Brain games for home, outside, and the car. Tap a card to play on your phone.
+    Brain games for home, outside, travel, paper, NFC tags, and more. Tap a card to play.
   </p>
 
-  {featured.length > 0 && (
-    <>
-      <h2 class="gr-section-title">Mind builders</h2>
-      <div class="gr-grid">
-        {featured.map((game) => (
-          <a class="gr-card gr-card--featured" href={`/activities/getting-ready/${game.slug}/`}>
-            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
-            <span class="gr-name">{game.title}</span>
-          </a>
-        ))}
-      </div>
-    </>
-  )}
-
-  {indoor.length > 0 && (
-    <>
-      <h2 class="gr-section-title">Indoor play</h2>
-      <div class="gr-grid">
-        {indoor.map((game) => (
-          <a class="gr-card" href={`/activities/getting-ready/${game.slug}/`}>
-            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
-            <span class="gr-name">{game.title}</span>
-          </a>
-        ))}
-      </div>
-    </>
-  )}
-
-  {outdoor.length > 0 && (
-    <>
-      <h2 class="gr-section-title gr-section-title--outdoor">Outdoor brain games</h2>
-      <div class="gr-grid">
-        {outdoor.map((game) => (
-          <a class="gr-card gr-card--outdoor" href={`/activities/getting-ready/${game.slug}/`}>
-            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
-            <span class="gr-name">{game.title}</span>
-          </a>
-        ))}
-      </div>
-    </>
-  )}
-
-  {car.length > 0 && (
-    <>
-      <h2 class="gr-section-title gr-section-title--car">Car &amp; travel games</h2>
-      <div class="gr-grid">
-        {car.map((game) => (
-          <a class="gr-card gr-card--car" href={`/activities/getting-ready/${game.slug}/`}>
-            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
-            <span class="gr-name">{game.title}</span>
-          </a>
-        ))}
-      </div>
-    </>
-  )}
+  {
+    gettingReadyHubSections.map((section) => {
+      const games = gamesForSection(section);
+      if (games.length === 0) return null;
+      return (
+        <>
+          <h2 class:list={['gr-section-title', section.titleClass]}>{section.title}</h2>
+          <div class="gr-grid">
+            {games.map((game) => (
+              <a
+                class:list={['gr-card', section.cardClass]}
+                href={`/activities/getting-ready/${game.slug}/`}
+              >
+                <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+                <span class="gr-name">{game.title}</span>
+              </a>
+            ))}
+          </div>
+        </>
+      );
+    })
+  }
 </section>
 
 <style>
@@ -84,25 +54,33 @@ const car = gettingReadyGames.filter((g) => g.category === 'car');
   }
 
   .gr-section-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: #5c3d8f;
-    margin: 0.75rem 0 0.5rem;
+    margin: 0.85rem 0 0.45rem;
     text-align: center;
   }
 
-  .gr-section-title--outdoor {
-    color: #2b8a3e;
-  }
-
-  .gr-section-title--car {
-    color: #1864ab;
-  }
+  .gr-section-title--outdoor { color: #2b8a3e; }
+  .gr-section-title--car { color: #1864ab; }
+  .gr-section-title--travel { color: #1971c2; }
+  .gr-section-title--paper { color: #e67700; }
+  .gr-section-title--nfc { color: #9c36b5; }
+  .gr-section-title--party { color: #c2255c; }
+  .gr-section-title--calm { color: #5f3dc4; }
+  .gr-section-title--move { color: #d9480f; }
+  .gr-section-title--words { color: #2f9e44; }
+  .gr-section-title--logic { color: #364fc7; }
+  .gr-section-title--math { color: #0b7285; }
+  .gr-section-title--attention { color: #862e9c; }
+  .gr-section-title--teamwork { color: #2b8a3e; }
+  .gr-section-title--creativity { color: #e8590c; }
+  .gr-section-title--seasonal { color: #c92a2a; }
 
   .gr-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 0.35rem;
   }
 
   .gr-card {
@@ -111,16 +89,16 @@ const car = gettingReadyGames.filter((g) => g.category === 'car');
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.35rem;
-    padding: 0.85rem 0.6rem;
-    border-radius: 16px;
+    gap: 0.3rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 14px;
     border: 2px solid #7b4bb7;
     background: linear-gradient(145deg, #fff9e6, #e8f4ff);
-    box-shadow: 0 5px 12px rgba(90, 50, 140, 0.15);
+    box-shadow: 0 4px 10px rgba(90, 50, 140, 0.12);
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     text-align: center;
-    min-height: 5.5rem;
+    min-height: 5rem;
     justify-content: center;
   }
 
@@ -129,26 +107,32 @@ const car = gettingReadyGames.filter((g) => g.category === 'car');
     background: linear-gradient(145deg, #fff3bf, #ffd8a8);
   }
 
-  .gr-card--outdoor {
-    border-color: #40c057;
-    background: linear-gradient(145deg, #e6fcf5, #d3f9d8);
-  }
-
-  .gr-card--car {
-    border-color: #4dabf7;
-    background: linear-gradient(145deg, #e7f5ff, #d0ebff);
-  }
+  .gr-card--outdoor { border-color: #40c057; background: linear-gradient(145deg, #e6fcf5, #d3f9d8); }
+  .gr-card--car { border-color: #4dabf7; background: linear-gradient(145deg, #e7f5ff, #d0ebff); }
+  .gr-card--travel { border-color: #339af0; background: linear-gradient(145deg, #e7f5ff, #fff9db); }
+  .gr-card--paper { border-color: #fd7e14; background: linear-gradient(145deg, #fff4e6, #ffe8cc); }
+  .gr-card--nfc { border-color: #ae3ec9; background: linear-gradient(145deg, #f8f0fc, #e5dbff); }
+  .gr-card--party { border-color: #f06595; background: linear-gradient(145deg, #fff0f6, #ffdeeb); }
+  .gr-card--calm { border-color: #9775fa; background: linear-gradient(145deg, #f3f0ff, #e9ecef); }
+  .gr-card--move { border-color: #ff6b6b; background: linear-gradient(145deg, #fff5f5, #ffe3e3); }
+  .gr-card--words { border-color: #51cf66; background: linear-gradient(145deg, #ebfbee, #d3f9d8); }
+  .gr-card--logic { border-color: #5c7cfa; background: linear-gradient(145deg, #edf2ff, #dbe4ff); }
+  .gr-card--math { border-color: #15aabf; background: linear-gradient(145deg, #e3fafc, #c5f6fa); }
+  .gr-card--attention { border-color: #cc5de8; background: linear-gradient(145deg, #f8f0fc, #eebefa); }
+  .gr-card--teamwork { border-color: #37b24d; background: linear-gradient(145deg, #e6fcf5, #b2f2bb); }
+  .gr-card--creativity { border-color: #ff922b; background: linear-gradient(145deg, #fff4e6, #ffe8cc); }
+  .gr-card--seasonal { border-color: #fa5252; background: linear-gradient(145deg, #fff5f5, #ffe3e3); }
 
   .gr-card:hover {
     transform: translateY(-2px);
   }
 
   .gr-emoji {
-    font-size: 2rem;
+    font-size: 1.75rem;
     line-height: 1;
   }
 
   .gr-name {
-    line-height: 1.2;
+    line-height: 1.15;
   }
 </style>
