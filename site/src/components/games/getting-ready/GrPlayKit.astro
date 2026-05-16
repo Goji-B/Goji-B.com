@@ -1,0 +1,240 @@
+---
+import './gr-game.css';
+import type { GettingReadyGame } from '../../../data/gettingReadyGames';
+import { getPlayConfig } from '../../../data/gettingReadyPlay';
+
+interface Props {
+  game: GettingReadyGame;
+}
+
+const { game } = Astro.props;
+const config = getPlayConfig(game.slug);
+if (!config) throw new Error(`No play config for ${game.slug}`);
+---
+
+<section
+  class="gr-play"
+  data-gr-playkit
+  data-music-theme={game.musicTheme}
+  data-mode={config.mode}
+  data-slug={game.slug}
+  data-category={game.category}
+>
+  <h2>{config.heading}</h2>
+  <p class="gr-msg" data-msg></p>
+  <p class="play-main" data-main></p>
+  <ul class="check-list" data-list hidden></ul>
+  <div class="gr-btn-row" data-actions></div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+  import { getPlayConfig } from '../../../data/gettingReadyPlay';
+  import type { MusicTheme } from '../../../lib/activityAudio';
+
+  function init() {
+    const root = document.querySelector('[data-gr-playkit]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+
+    const slug = root.dataset.slug ?? '';
+    const config = getPlayConfig(slug);
+    if (!config) return;
+
+    const theme = (root.dataset.musicTheme ?? 'playful') as MusicTheme;
+    bindActivityUnlock(root, theme);
+
+    const msg = root.querySelector('[data-msg]');
+    const main = root.querySelector('[data-main]');
+    const list = root.querySelector('[data-list]');
+    const actions = root.querySelector('[data-actions]');
+
+    const nextLabel = config.nextLabel ?? 'Next';
+    const doneLabel = config.doneLabel ?? 'Done!';
+
+    function speak(text: string) {
+      if (text) audio.speak(text);
+    }
+
+    function clearActions() {
+      actions.innerHTML = '';
+    }
+
+    function addBtn(label: string, className: string, onClick: () => void) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = className;
+      b.textContent = label;
+      b.addEventListener('click', onClick);
+      actions.appendChild(b);
+    }
+
+    if (config.mode === 'prompts') {
+      const prompts = config.prompts ?? [];
+      let i = 0;
+      msg.textContent = 'Read out loud. Go play!';
+      function show() {
+        const text = prompts[i % prompts.length];
+        main.textContent = text;
+        speak(text);
+        i += 1;
+      }
+      clearActions();
+      addBtn(nextLabel, 'gr-btn', () => {
+        audio.playSfx('chime');
+        show();
+      });
+      show();
+    }
+
+    if (config.mode === 'checklist') {
+      const items = config.items ?? [];
+      const done = new Set();
+      const category = root.dataset.category ?? 'indoor';
+      list.hidden = false;
+      main.hidden = true;
+      msg.textContent =
+        category === 'car'
+          ? 'Tap when you spot it from the car.'
+          : 'Tap when you find it outside.';
+      list.innerHTML = '';
+      items.forEach((label, idx) => {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'check-item';
+        b.textContent = label;
+        b.addEventListener('click', () => {
+          if (done.has(idx)) return;
+          done.add(idx);
+          b.classList.add('ok');
+          b.textContent = `✓ ${label}`;
+          audio.playSfx('match');
+          if (done.size === items.length) {
+            msg.textContent = 'You found them all!';
+            speak('You did it!');
+            audio.playSfx('fanfare');
+          }
+        });
+        li.appendChild(b);
+        list.appendChild(li);
+      });
+      clearActions();
+      addBtn('New list', 'gr-btn gr-btn--ghost', () => {
+        done.clear();
+        list.querySelectorAll('.check-item').forEach((el, idx) => {
+          el.classList.remove('ok');
+          el.textContent = items[idx];
+        });
+        msg.textContent = 'Tap each one when you find it.';
+      });
+    }
+
+    if (config.mode === 'pick-two') {
+      const pairs = config.pairs ?? [];
+      msg.textContent = 'Pick one — talk about why!';
+      function showPair() {
+        const [a, b] = pairs[Math.floor(Math.random() * pairs.length)];
+        main.textContent = 'Would you rather…';
+        clearActions();
+        addBtn(a, 'gr-btn gr-btn--good', () => {
+          audio.playSfx('tap');
+          speak(a);
+        });
+        addBtn(b, 'gr-btn gr-btn--warn', () => {
+          audio.playSfx('tap');
+          speak(b);
+        });
+        addBtn('Another', 'gr-btn gr-btn--ghost', showPair);
+      }
+      showPair();
+    }
+
+    if (config.mode === 'counter') {
+      let count = 0;
+      const label = config.counterLabel ?? 'Count';
+      msg.textContent = config.prompts?.[0] ?? 'Tap +1 each time you spot one.';
+      function render() {
+        main.textContent = `${label}: ${count}`;
+      }
+      clearActions();
+      addBtn('+1', 'gr-btn gr-btn--good', () => {
+        count += 1;
+        render();
+        audio.playSfx('tap');
+      });
+      addBtn('Reset', 'gr-btn gr-btn--ghost', () => {
+        count = 0;
+        render();
+      });
+      render();
+    }
+
+    if (config.mode === 'spy') {
+      const hints = config.spyHints ?? [];
+      msg.textContent = 'Guesser asks yes/no questions.';
+      function newSpy() {
+        const hint = hints[Math.floor(Math.random() * hints.length)];
+        main.textContent = `I spy with my little eye… ${hint}`;
+        speak(`I spy something ${hint}`);
+      }
+      clearActions();
+      addBtn(config.nextLabel ?? 'New spy', 'gr-btn', () => {
+        audio.playSfx('chime');
+        newSpy();
+      });
+      newSpy();
+    }
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .play-main {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.4;
+    background: #fff9db;
+    border: 2px solid #fcc419;
+    border-radius: 14px;
+    padding: 0.85rem;
+    min-height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.35rem 0;
+  }
+
+  .check-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.35rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    text-align: left;
+  }
+
+  :global(.check-item) {
+    all: unset;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    border: 2px solid #74c0fc;
+    background: #e7f5ff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    color: #1864ab;
+  }
+
+  :global(.check-item.ok) {
+    background: #d3f9d8;
+    border-color: #40c057;
+    color: #2b8a3e;
+  }
+</style>

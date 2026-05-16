@@ -2,12 +2,14 @@
 import { gettingReadyGames } from '../../data/gettingReadyGames';
 
 const featured = gettingReadyGames.filter((g) => g.mindPower);
-const rest = gettingReadyGames.filter((g) => !g.mindPower);
+const indoor = gettingReadyGames.filter((g) => g.category === 'indoor' && !g.mindPower);
+const outdoor = gettingReadyGames.filter((g) => g.category === 'outdoor');
+const car = gettingReadyGames.filter((g) => g.category === 'car');
 ---
 
 <section class="gr-hub">
   <p class="gr-intro">
-    New games for phone and tablet. Tap a card to play. More outdoor, travel, and NFC ideas coming soon.
+    Brain games for home, outside, and the car. Tap a card to play on your phone.
   </p>
 
   {featured.length > 0 && (
@@ -24,15 +26,47 @@ const rest = gettingReadyGames.filter((g) => !g.mindPower);
     </>
   )}
 
-  <h2 class="gr-section-title">More getting ready</h2>
-  <div class="gr-grid">
-    {rest.map((game) => (
-      <a class="gr-card" href={`/activities/getting-ready/${game.slug}/`}>
-        <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
-        <span class="gr-name">{game.title}</span>
-      </a>
-    ))}
-  </div>
+  {indoor.length > 0 && (
+    <>
+      <h2 class="gr-section-title">Indoor play</h2>
+      <div class="gr-grid">
+        {indoor.map((game) => (
+          <a class="gr-card" href={`/activities/getting-ready/${game.slug}/`}>
+            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+            <span class="gr-name">{game.title}</span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+
+  {outdoor.length > 0 && (
+    <>
+      <h2 class="gr-section-title gr-section-title--outdoor">Outdoor brain games</h2>
+      <div class="gr-grid">
+        {outdoor.map((game) => (
+          <a class="gr-card gr-card--outdoor" href={`/activities/getting-ready/${game.slug}/`}>
+            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+            <span class="gr-name">{game.title}</span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+
+  {car.length > 0 && (
+    <>
+      <h2 class="gr-section-title gr-section-title--car">Car &amp; travel games</h2>
+      <div class="gr-grid">
+        {car.map((game) => (
+          <a class="gr-card gr-card--car" href={`/activities/getting-ready/${game.slug}/`}>
+            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+            <span class="gr-name">{game.title}</span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
 </section>
 
 <style>
@@ -54,6 +88,14 @@ const rest = gettingReadyGames.filter((g) => !g.mindPower);
     color: #5c3d8f;
     margin: 0.75rem 0 0.5rem;
     text-align: center;
+  }
+
+  .gr-section-title--outdoor {
+    color: #2b8a3e;
+  }
+
+  .gr-section-title--car {
+    color: #1864ab;
   }
 
   .gr-grid {
@@ -85,6 +127,16 @@ const rest = gettingReadyGames.filter((g) => !g.mindPower);
   .gr-card--featured {
     border-color: #e67700;
     background: linear-gradient(145deg, #fff3bf, #ffd8a8);
+  }
+
+  .gr-card--outdoor {
+    border-color: #40c057;
+    background: linear-gradient(145deg, #e6fcf5, #d3f9d8);
+  }
+
+  .gr-card--car {
+    border-color: #4dabf7;
+    background: linear-gradient(145deg, #e7f5ff, #d0ebff);
   }
 
   .gr-card:hover {
