@@ -1,8 +1,25 @@
 <section class="game-wrap" data-tictactoe data-music-theme="playful">
   <h2>Tic-Tac-Toe</h2>
+  <p class="tagline">Let's play — <strong>X</strong> vs <strong>O</strong></p>
+
+  <p class="scoreboard" data-scoreboard aria-live="polite">
+    <span class="score-pill score-x"
+      ><span class="score-mark" aria-hidden="true">X</span> <strong data-score-x>0</strong></span
+    >
+    <span class="score-pill score-draw"
+      >Draw <strong data-score-draw>0</strong></span
+    >
+    <span class="score-pill score-o"
+      ><span class="score-mark" aria-hidden="true">O</span> <strong data-score-o>0</strong></span
+    >
+  </p>
+
+  <p class="rules">
+    Take turns. Get <strong>3 in a row</strong> — across, down, or diagonal. That's the winner!
+  </p>
 
   <p class="turn-badge" data-turn aria-live="polite">
-    <span class="turn-label">Go</span>
+    <span class="turn-label" data-turn-label>Turn</span>
     <span class="turn-player" data-turn-player>X</span>
   </p>
 
@@ -19,7 +36,7 @@
   </div>
 
   <p class="status" data-status aria-live="assertive"></p>
-  <button class="reset-btn" data-reset type="button">Again!</button>
+  <button class="reset-btn" data-reset type="button" hidden>Next game!</button>
 </section>
 
 <script>
@@ -32,14 +49,25 @@
     const board = root.querySelector('[data-board]');
     const status = root.querySelector('[data-status]');
     const turnPlayer = root.querySelector('[data-turn-player]');
+    const turnLabel = root.querySelector('[data-turn-label]');
     const reset = root.querySelector('[data-reset]');
-    if (!board || !status || !reset || !turnPlayer) return;
+    const scoreX = root.querySelector('[data-score-x]');
+    const scoreO = root.querySelector('[data-score-o]');
+    const scoreDraw = root.querySelector('[data-score-draw]');
+    if (!board || !status || !reset || !turnPlayer || !scoreX || !scoreO || !scoreDraw) return;
 
     root.dataset.initialized = 'true';
     bindActivityUnlock(root, 'playful');
+
     let currentPlayer = 'X';
     let gameActive = true;
     let gameState = Array(9).fill('');
+    let introSpoken = false;
+    let roundCount = 0;
+    /** Who opens the next round — alternates for fairness */
+    let roundStarter = 'X';
+
+    const scores = { x: 0, o: 0, draw: 0 };
 
     const winCombos = [
       [0, 1, 2],
@@ -52,9 +80,16 @@
       [2, 4, 6],
     ];
 
+    function updateScoreboard() {
+      scoreX.textContent = String(scores.x);
+      scoreO.textContent = String(scores.o);
+      scoreDraw.textContent = String(scores.draw);
+    }
+
     function setTurn(player) {
       turnPlayer.textContent = player;
       turnPlayer.className = 'turn-player ' + player.toLowerCase();
+      turnLabel.textContent = gameActive ? 'Turn' : '—';
       root.classList.remove('x-win', 'o-win', 'draw');
     }
 
@@ -84,10 +119,29 @@
       });
     }
 
+    function speakStarts(player, waitForIntro) {
+      const delay = waitForIntro ? 2400 : 350;
+      window.setTimeout(() => audio.speak(`${player} starts`), delay);
+    }
+
+    function speakIntroOnce() {
+      if (introSpoken) return;
+      introSpoken = true;
+      audio.speak("Let's play! X versus O. Get three in a row to win.");
+    }
+
     function endGame(message, speech, stateClass) {
       status.textContent = message;
       gameActive = false;
       root.classList.add(stateClass);
+      turnLabel.textContent = '—';
+      reset.hidden = false;
+
+      if (stateClass === 'x-win') scores.x += 1;
+      else if (stateClass === 'o-win') scores.o += 1;
+      else scores.draw += 1;
+      updateScoreboard();
+
       audio.speak(speech);
       audio.playSfx(stateClass === 'draw' ? 'draw' : 'fanfare');
     }
@@ -98,6 +152,7 @@
       const index = Number(tile.dataset.index);
       if (!gameActive || Number.isNaN(index) || gameState[index] !== '') return;
 
+      audio.unlock();
       gameState[index] = currentPlayer;
       tile.textContent = currentPlayer;
       tile.classList.add(currentPlayer.toLowerCase());
@@ -119,23 +174,40 @@
       }
     }
 
-    function resetGame() {
-      audio.stopAll();
-      if (audio.musicOn) audio.startMusic('playful');
+    function clearBoard() {
       gameState = Array(9).fill('');
-      currentPlayer = 'X';
-      gameActive = true;
-      status.textContent = '';
-      setTurn('X');
       Array.from(board.children).forEach((tile) => {
         tile.textContent = '';
         tile.classList.remove('x', 'o', 'winner');
       });
     }
 
+    function startRound() {
+      const isFirst = roundCount === 0;
+      if (!isFirst) audio.stopAll();
+      if (audio.musicOn) audio.startMusic('playful');
+
+      clearBoard();
+      gameActive = true;
+      status.textContent = '';
+      reset.hidden = true;
+      currentPlayer = roundStarter;
+      roundStarter = roundStarter === 'X' ? 'O' : 'X';
+      setTurn(currentPlayer);
+      speakStarts(currentPlayer, isFirst);
+      roundCount += 1;
+    }
+
+    function onNextGame() {
+      startRound();
+    }
+
     board.addEventListener('click', handleClick);
-    reset.addEventListener('click', resetGame);
-    resetGame();
+    reset.addEventListener('click', onNextGame);
+
+    updateScoreboard();
+    speakIntroOnce();
+    startRound();
   }
 
   initTicTacToe();
@@ -171,9 +243,87 @@
   }
 
   .game-wrap h2 {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.25rem;
     color: #4a2878;
     font-size: 1.65rem;
+  }
+
+  .tagline {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #5c3d8f;
+  }
+
+  .tagline strong {
+    font-size: 1.15rem;
+  }
+
+  .scoreboard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.5rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid #9b6fd4;
+  }
+
+  .score-pill.score-x {
+    border-color: #74c0fc;
+    color: #1864ab;
+  }
+
+  .score-pill.score-o {
+    border-color: #ffa94d;
+    color: #c2410c;
+  }
+
+  .score-pill.score-draw {
+    color: #5c3d8f;
+  }
+
+  .score-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .score-x .score-mark {
+    background: #1c7ed6;
+  }
+
+  .score-o .score-mark {
+    background: #e8590c;
+  }
+
+  .rules {
+    margin: 0 0 0.55rem;
+    padding: 0.4rem 0.55rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: #4a2878;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 10px;
+    border: 1px dashed #9b6fd4;
   }
 
   .turn-badge {
