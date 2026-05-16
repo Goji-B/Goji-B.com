@@ -1,0 +1,102 @@
+---
+import { gettingReadyGames } from '../../data/gettingReadyGames';
+
+const featured = gettingReadyGames.filter((g) => g.mindPower);
+const rest = gettingReadyGames.filter((g) => !g.mindPower);
+---
+
+<section class="gr-hub">
+  <p class="gr-intro">
+    New games for phone and tablet. Tap a card to play. More outdoor, travel, and NFC ideas coming soon.
+  </p>
+
+  {featured.length > 0 && (
+    <>
+      <h2 class="gr-section-title">Mind builders</h2>
+      <div class="gr-grid">
+        {featured.map((game) => (
+          <a class="gr-card gr-card--featured" href={`/activities/getting-ready/${game.slug}/`}>
+            <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+            <span class="gr-name">{game.title}</span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+
+  <h2 class="gr-section-title">More getting ready</h2>
+  <div class="gr-grid">
+    {rest.map((game) => (
+      <a class="gr-card" href={`/activities/getting-ready/${game.slug}/`}>
+        <span class="gr-emoji" aria-hidden="true">{game.emoji}</span>
+        <span class="gr-name">{game.title}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .gr-hub {
+    margin-top: 0.5rem;
+  }
+
+  .gr-intro {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4a2878;
+    margin: 0 0 1rem;
+    line-height: 1.4;
+  }
+
+  .gr-section-title {
+    font-size: 1.15rem;
+    color: #5c3d8f;
+    margin: 0.75rem 0 0.5rem;
+    text-align: center;
+  }
+
+  .gr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .gr-card {
+    text-decoration: none;
+    color: #1c2a1f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.85rem 0.6rem;
+    border-radius: 16px;
+    border: 2px solid #7b4bb7;
+    background: linear-gradient(145deg, #fff9e6, #e8f4ff);
+    box-shadow: 0 5px 12px rgba(90, 50, 140, 0.15);
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-align: center;
+    min-height: 5.5rem;
+    justify-content: center;
+  }
+
+  .gr-card--featured {
+    border-color: #e67700;
+    background: linear-gradient(145deg, #fff3bf, #ffd8a8);
+  }
+
+  .gr-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .gr-emoji {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .gr-name {
+    line-height: 1.2;
+  }
+</style>

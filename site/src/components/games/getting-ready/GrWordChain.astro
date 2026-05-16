@@ -1,0 +1,140 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-chain data-music-theme="electronic">
+  <h2>Word chain</h2>
+  <p class="gr-msg" data-msg>Pick a word that starts with the last letter.</p>
+  <p class="current" data-word>Start: cat</p>
+  <p class="chain" data-chain>cat</p>
+  <div class="pick-row" data-picks></div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const WORDS = [
+    'cat', 'tree', 'egg', 'goat', 'tiger', 'rabbit', 'tent', 'table', 'elephant',
+    'train', 'nest', 'sun', 'nose', 'ear', 'rain', 'net', 'top', 'pen', 'night',
+    'toy', 'yellow', 'wolf', 'fish', 'hat', 'tap', 'pan', 'nail', 'lion', 'ninja',
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-gr-chain]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'electronic');
+    const msg = root.querySelector('[data-msg]');
+    const wordEl = root.querySelector('[data-word]');
+    const chainEl = root.querySelector('[data-chain]');
+    const picks = root.querySelector('[data-picks]');
+    let current = 'cat';
+    let chain = ['cat'];
+
+    function lastLetter(w) {
+      const c = w.trim().slice(-1).toLowerCase();
+      return c;
+    }
+
+    function options() {
+      const need = lastLetter(current);
+      const valid = WORDS.filter(
+        (w) => w.startsWith(need) && !chain.includes(w),
+      );
+      const wrong = WORDS.filter(
+        (w) => !w.startsWith(need) && w !== current,
+      );
+      const pick = shuffle(valid).slice(0, 1);
+      const decoys = shuffle(wrong).slice(0, 2);
+      return shuffle([...pick, ...decoys]).slice(0, 3);
+    }
+
+    function shuffle(arr) {
+      const c = [...arr];
+      for (let i = c.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [c[i], c[j]] = [c[j], c[i]];
+      }
+      return c;
+    }
+
+    function render() {
+      const need = lastLetter(current);
+      wordEl.textContent = `Starts with: ${need.toUpperCase()}`;
+      chainEl.textContent = chain.join(' → ');
+      picks.innerHTML = '';
+      const opts = options();
+      if (opts.length === 0) {
+        msg.textContent = 'Great chain! Tap to restart.';
+        const b = document.createElement('button');
+        b.className = 'gr-btn';
+        b.textContent = 'New chain';
+        b.addEventListener('click', () => {
+          current = 'cat';
+          chain = ['cat'];
+          msg.textContent = 'Pick a word that starts with the last letter.';
+          render();
+        });
+        picks.appendChild(b);
+        return;
+      }
+      opts.forEach((w) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pick';
+        b.textContent = w;
+        b.addEventListener('click', () => {
+          if (w.startsWith(need)) {
+            current = w;
+            chain.push(w);
+            audio.playSfx('match');
+            audio.speak(w);
+            render();
+          } else {
+            msg.textContent = `Needs letter ${need.toUpperCase()}!`;
+            audio.playSfx('buzz');
+          }
+        });
+        picks.appendChild(b);
+      });
+    }
+
+    render();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .current {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #1864ab;
+    margin: 0.25rem 0;
+  }
+
+  .chain {
+    font-size: 0.9rem;
+    color: #5c3d8f;
+    word-break: break-word;
+    margin: 0 0 0.5rem;
+  }
+
+  .pick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+  }
+
+  :global(.pick) {
+    border: 2px solid #9775fa;
+    background: #f3f0ff;
+    border-radius: 999px;
+    padding: 0.45rem 0.85rem;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+</style>

@@ -1,0 +1,197 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-chess data-music-theme="acoustic">
+  <h2>Pawn battle</h2>
+  <p class="gr-msg" data-msg>Blue starts. Tap a pawn, then a square.</p>
+  <p class="turn" data-turn>Turn: Blue</p>
+  <div class="board" data-board></div>
+  <div class="gr-btn-row">
+    <button class="gr-btn gr-btn--ghost" data-reset type="button">Reset</button>
+  </div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  function init() {
+    const root = document.querySelector('[data-gr-chess]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'acoustic');
+    const board = root.querySelector('[data-board]');
+    const msg = root.querySelector('[data-msg]');
+    const turnEl = root.querySelector('[data-turn]');
+    const resetBtn = root.querySelector('[data-reset]');
+    const SIZE = 5;
+    let state = [];
+    let turn = 'B';
+    let selected = null;
+
+    function empty() {
+      return Array.from({ length: SIZE }, () => Array(SIZE).fill(''));
+    }
+
+    function setup() {
+      state = empty();
+      for (let c = 0; c < SIZE; c++) {
+        state[0][c] = 'B';
+        state[SIZE - 1][c] = 'R';
+      }
+      turn = 'B';
+      selected = null;
+      render();
+      msg.textContent = 'Blue starts. Tap a pawn, then a square.';
+    }
+
+    function render() {
+      board.innerHTML = '';
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'sq';
+          if ((r + c) % 2) cell.classList.add('dark');
+          const p = state[r][c];
+          cell.textContent = p === 'B' ? '♟' : p === 'R' ? '♙' : '';
+          if (p === 'B') cell.classList.add('blue');
+          if (p === 'R') cell.classList.add('red');
+          if (selected && selected.r === r && selected.c === c) cell.classList.add('sel');
+          cell.addEventListener('click', () => onCell(r, c));
+          board.appendChild(cell);
+        }
+      }
+      turnEl.textContent = turn === 'B' ? 'Turn: Blue' : 'Turn: Red';
+    }
+
+    function onCell(r, c) {
+      const piece = state[r][c];
+      if (selected) {
+        if (tryMove(selected.r, selected.c, r, c)) {
+          selected = null;
+          if (checkWin()) return;
+          turn = turn === 'B' ? 'R' : 'B';
+          render();
+          audio.playSfx('tap');
+          return;
+        }
+      }
+      if (piece && piece === turn) {
+        selected = { r, c };
+        render();
+        audio.playSfx('flip');
+      } else {
+        selected = null;
+        render();
+      }
+    }
+
+    function tryMove(fr, fc, tr, tc) {
+      const p = state[fr][fc];
+      const dr = tr - fr;
+      const dc = Math.abs(tc - fc);
+      const target = state[tr][tc];
+      if (p === 'B') {
+        if (dc > 1 || dr < 1 || dr > 2) return false;
+        if (dr === 2 && dc === 1 && target === 'R') {
+          state[tr][tc] = 'B';
+          state[fr][fc] = '';
+          return true;
+        }
+        if (dr === 1 && dc === 0 && !target) {
+          state[tr][tc] = 'B';
+          state[fr][fc] = '';
+          return true;
+        }
+        return false;
+      }
+      if (p === 'R') {
+        if (dc > 1 || dr > -1 || dr < -2) return false;
+        if (dr === -2 && dc === 1 && target === 'B') {
+          state[tr][tc] = 'R';
+          state[fr][fc] = '';
+          return true;
+        }
+        if (dr === -1 && dc === 0 && !target) {
+          state[tr][tc] = 'R';
+          state[fr][fc] = '';
+          return true;
+        }
+        return false;
+      }
+      return false;
+    }
+
+    function checkWin() {
+      const blues = state.flat().filter((x) => x === 'B').length;
+      const reds = state.flat().filter((x) => x === 'R').length;
+      const blueEnd = state[SIZE - 1].some((x) => x === 'B');
+      const redEnd = state[0].some((x) => x === 'R');
+      if (blues === 0 || redEnd) {
+        msg.textContent = 'Red wins!';
+        audio.speak('Red wins');
+        return true;
+      }
+      if (reds === 0 || blueEnd) {
+        msg.textContent = 'Blue wins!';
+        audio.speak('Blue wins');
+        return true;
+      }
+      return false;
+    }
+
+    resetBtn?.addEventListener('click', setup);
+    setup();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .turn {
+    font-weight: 800;
+    color: #4a2878;
+    margin: 0 0 0.4rem;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 6px;
+    background: #5c3d8f;
+    border-radius: 10px;
+  }
+
+  :global(.sq) {
+    all: unset;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: #f8f0ff;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  :global(.sq.dark) {
+    background: #d0bfff;
+  }
+
+  :global(.sq.sel) {
+    box-shadow: inset 0 0 0 3px #fab005;
+  }
+
+  :global(.sq.blue) {
+    color: #1864ab;
+  }
+
+  :global(.sq.red) {
+    color: #c92a2a;
+  }
+</style>

@@ -1,0 +1,56 @@
+.gr-play {
+  border: 2px solid #7b4bb7;
+  border-radius: 16px;
+  padding: 0.85rem;
+  background: #fff;
+  text-align: center;
+}
+
+.gr-play h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #4a2878;
+}
+
+.gr-msg {
+  min-height: 1.4rem;
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  color: #2f6f4e;
+  font-size: 1rem;
+}
+
+.gr-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.gr-btn {
+  border: 2px solid #5f3dc4;
+  background: linear-gradient(180deg, #9775fa, #7950f2);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.gr-btn--good {
+  border-color: #2f9e44;
+  background: linear-gradient(180deg, #69db7c, #40c057);
+}
+
+.gr-btn--warn {
+  border-color: #e67700;
+  background: linear-gradient(180deg, #ffd43b, #fab005);
+  color: #5c3d00;
+}
+
+.gr-btn--ghost {
+  background: #fff;
+  color: #5f3dc4;
+}

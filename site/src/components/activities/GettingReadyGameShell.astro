@@ -1,0 +1,81 @@
+---
+import type { GettingReadyGame } from '../../data/gettingReadyGames';
+
+interface Props {
+  game: GettingReadyGame;
+}
+
+const { game } = Astro.props;
+---
+
+<article class="gr-game-page">
+  <p class="gr-hero-emoji" aria-hidden="true">{game.emoji}</p>
+  <h1>{game.title}</h1>
+  <p class="gr-tagline">{game.tagline}</p>
+  <p class="gr-howto"><strong>How to play:</strong> {game.howTo}</p>
+  <ul class="gr-skills" aria-label="Skills">
+    {game.skills.map((skill) => (
+      <li>{skill}</li>
+    ))}
+  </ul>
+  <slot />
+</article>
+
+<style>
+  .gr-game-page {
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .gr-hero-emoji {
+    text-align: center;
+    font-size: 2.75rem;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .gr-game-page h1 {
+    margin: 0.35rem 0 0.25rem;
+    font-size: 1.55rem;
+    color: #4a2878;
+  }
+
+  .gr-tagline {
+    text-align: center;
+    font-weight: 700;
+    color: #5c3d8f;
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  .gr-howto {
+    font-size: 0.92rem;
+    line-height: 1.4;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px dashed #9b6fd4;
+    border-radius: 12px;
+    padding: 0.5rem 0.65rem;
+    margin: 0 0 0.55rem;
+    text-align: left;
+  }
+
+  .gr-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.75rem;
+  }
+
+  .gr-skills li {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: #ede4ff;
+    color: #4a2878;
+    border: 1px solid #c4b5fd;
+  }
+</style>

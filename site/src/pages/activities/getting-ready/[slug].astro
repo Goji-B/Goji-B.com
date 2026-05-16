@@ -1,0 +1,47 @@
+---
+import ActivityLayout from '../../../layouts/ActivityLayout.astro';
+import GettingReadyGameShell from '../../../components/activities/GettingReadyGameShell.astro';
+import BackToGettingReady from '../../../components/activities/BackToGettingReady.astro';
+import { gettingReadyGames, getGettingReadyGame } from '../../../data/gettingReadyGames';
+import GrMemoryCards from '../../../components/games/getting-ready/GrMemoryCards.astro';
+import GrChessKids from '../../../components/games/getting-ready/GrChessKids.astro';
+import GrTwentyQuestions from '../../../components/games/getting-ready/GrTwentyQuestions.astro';
+import GrStoryBuilding from '../../../components/games/getting-ready/GrStoryBuilding.astro';
+import GrTangramShapes from '../../../components/games/getting-ready/GrTangramShapes.astro';
+import GrTreasureHunt from '../../../components/games/getting-ready/GrTreasureHunt.astro';
+import GrSimonSays from '../../../components/games/getting-ready/GrSimonSays.astro';
+import GrBuildingChallenges from '../../../components/games/getting-ready/GrBuildingChallenges.astro';
+import GrWordChain from '../../../components/games/getting-ready/GrWordChain.astro';
+
+export function getStaticPaths() {
+  return gettingReadyGames.map((game) => ({ params: { slug: game.slug } }));
+}
+
+const { slug } = Astro.params;
+const game = getGettingReadyGame(slug ?? '');
+
+if (!game) {
+  throw new Error(`Unknown getting-ready game: ${slug}`);
+}
+
+const GameBySlug: Record<string, typeof GrMemoryCards> = {
+  'memory-card-matching': GrMemoryCards,
+  'chess-kids': GrChessKids,
+  'twenty-questions': GrTwentyQuestions,
+  'story-building': GrStoryBuilding,
+  'tangram-shapes': GrTangramShapes,
+  'treasure-hunt': GrTreasureHunt,
+  'simon-says': GrSimonSays,
+  'building-challenges': GrBuildingChallenges,
+  'word-chain': GrWordChain,
+};
+
+const Game = GameBySlug[game.slug];
+---
+
+<ActivityLayout title={`${game.title} — Getting Ready`}>
+  <GettingReadyGameShell game={game}>
+    {Game && <Game />}
+  </GettingReadyGameShell>
+  <BackToGettingReady />
+</ActivityLayout>

@@ -1,0 +1,100 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-hunt data-music-theme="explore">
+  <h2>Clue hunt</h2>
+  <p class="clue-num" data-step>Clue 1 of 5</p>
+  <p class="clue-text" data-clue></p>
+  <div class="gr-btn-row">
+    <button class="gr-btn gr-btn--good" data-found type="button">Found it!</button>
+    <button class="gr-btn gr-btn--ghost" data-theme type="button">New hunt</button>
+  </div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const HUNTS = [
+    {
+      name: 'Bedroom',
+      clues: [
+        'Look where you sleep. Check under the pillow.',
+        'Find something soft and cozy.',
+        'Look near a lamp or light.',
+        'Check a drawer you use every day.',
+        'Treasure hideout: under the bed! 🎁',
+      ],
+    },
+    {
+      name: 'Kitchen',
+      clues: [
+        'Go where snacks live.',
+        'Look inside something cold.',
+        'Find a cup or bowl.',
+        'Check near the sink.',
+        'Treasure spot: a kitchen cupboard! 🎁',
+      ],
+    },
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-gr-hunt]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'explore');
+    const stepEl = root.querySelector('[data-step]');
+    const clueEl = root.querySelector('[data-clue]');
+    let hunt = HUNTS[0];
+    let i = 0;
+
+    function show() {
+      stepEl.textContent = `Clue ${i + 1} of ${hunt.clues.length}`;
+      clueEl.textContent = hunt.clues[i];
+      audio.speak(hunt.clues[i]);
+    }
+
+    function newHunt() {
+      hunt = HUNTS[Math.floor(Math.random() * HUNTS.length)];
+      i = 0;
+      show();
+    }
+
+    root.querySelector('[data-found]')?.addEventListener('click', () => {
+      audio.playSfx('chime');
+      if (i < hunt.clues.length - 1) {
+        i += 1;
+        show();
+      } else {
+        audio.speak('You found the treasure!');
+        audio.playSfx('fanfare');
+      }
+    });
+
+    root.querySelector('[data-theme]')?.addEventListener('click', newHunt);
+    newHunt();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .clue-num {
+    font-weight: 800;
+    color: #e67700;
+    margin: 0;
+  }
+
+  .clue-text {
+    text-align: left;
+    background: #fff3bf;
+    border: 2px solid #fab005;
+    border-radius: 12px;
+    padding: 0.75rem;
+    font-size: 1.05rem;
+    line-height: 1.4;
+    min-height: 4.5rem;
+    margin: 0.5rem 0;
+  }
+</style>

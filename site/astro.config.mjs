@@ -15,6 +15,7 @@ export default defineConfig({
 					label: 'Activities',
 					items: [
 						{ label: 'Activities Home', link: '/activities/' },
+						{ label: 'Activities — Getting Ready', link: '/activities/getting-ready/' },
 						{ label: 'Tic-Tac-Toe Activity', link: '/activities/tic-tac-toe/' },
 						{ label: 'Color Match Tap Activity', link: '/activities/color-match-tap/' },
 						{ label: 'Animal Memory Cards Activity', link: '/activities/animal-memory-cards/' },

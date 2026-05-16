@@ -1,0 +1,142 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-20q data-music-theme="quirky">
+  <h2>20 Questions</h2>
+  <p class="gr-msg" data-msg>Thinker taps New secret.</p>
+  <p class="secret" data-secret hidden></p>
+  <p class="q-left" data-left></p>
+  <div class="gr-btn-row" data-actions>
+    <button class="gr-btn" data-new type="button">New secret</button>
+    <button class="gr-btn gr-btn--good" data-ready type="button" hidden>Ready — ask me!</button>
+  </div>
+  <div class="gr-btn-row" data-ask hidden>
+    <button class="gr-btn gr-btn--good" data-yes type="button">Yes</button>
+    <button class="gr-btn gr-btn--ghost" data-no type="button">No</button>
+    <button class="gr-btn gr-btn--warn" data-guess type="button">I know!</button>
+  </div>
+  <div class="gr-btn-row" data-picks hidden></div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const SECRETS = [
+    { label: 'a cat', emoji: '🐱' },
+    { label: 'the sun', emoji: '☀️' },
+    { label: 'a car', emoji: '🚗' },
+    { label: 'pizza', emoji: '🍕' },
+    { label: 'a tree', emoji: '🌳' },
+    { label: 'a ball', emoji: '⚽' },
+    { label: 'a book', emoji: '📚' },
+    { label: 'the moon', emoji: '🌙' },
+  ];
+
+  function shuffle(arr) {
+    const c = [...arr];
+    for (let i = c.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [c[i], c[j]] = [c[j], c[i]];
+    }
+    return c;
+  }
+
+  function init() {
+    const root = document.querySelector('[data-gr-20q]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'quirky');
+    const msg = root.querySelector('[data-msg]');
+    const secretEl = root.querySelector('[data-secret]');
+    const leftEl = root.querySelector('[data-left]');
+    const readyBtn = root.querySelector('[data-ready]');
+    const ask = root.querySelector('[data-ask]');
+    const picks = root.querySelector('[data-picks]');
+    let secret = SECRETS[0];
+    let left = 20;
+
+    function newSecret() {
+      secret = SECRETS[Math.floor(Math.random() * SECRETS.length)];
+      left = 20;
+      secretEl.hidden = false;
+      secretEl.textContent = `${secret.emoji} It is ${secret.label}`;
+      leftEl.textContent = '';
+      ask.hidden = true;
+      picks.hidden = true;
+      readyBtn.hidden = false;
+      msg.textContent = 'Thinker: remember this! Tap Ready when guesser can ask.';
+    }
+
+    function startAsking() {
+      secretEl.hidden = true;
+      readyBtn.hidden = true;
+      ask.hidden = false;
+      leftEl.textContent = `${left} questions left`;
+      msg.textContent = 'Guesser: ask out loud, then tap Yes or No.';
+    }
+
+    function useQuestion() {
+      left -= 1;
+      leftEl.textContent = `${left} questions left`;
+      audio.playSfx('tap');
+      if (left <= 0) {
+        msg.textContent = 'Out of questions!';
+        secretEl.hidden = false;
+        ask.hidden = true;
+        audio.speak('Time is up');
+      }
+    }
+
+    function showGuessPicks() {
+      ask.hidden = true;
+      picks.hidden = false;
+      picks.innerHTML = '';
+      const options = shuffle(SECRETS).slice(0, 3);
+      if (!options.some((o) => o.label === secret.label)) options[0] = secret;
+      shuffle(options).forEach((opt) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'gr-btn';
+        b.textContent = `${opt.emoji} ${opt.label}`;
+        b.addEventListener('click', () => {
+          if (opt.label === secret.label) {
+            msg.textContent = 'Correct!';
+            audio.speak('You got it!');
+            audio.playSfx('fanfare');
+          } else {
+            msg.textContent = 'Not quite!';
+            audio.playSfx('buzz');
+            ask.hidden = false;
+          }
+          picks.hidden = true;
+        });
+        picks.appendChild(b);
+      });
+    }
+
+    root.querySelector('[data-new]')?.addEventListener('click', newSecret);
+    readyBtn?.addEventListener('click', startAsking);
+    root.querySelector('[data-yes]')?.addEventListener('click', useQuestion);
+    root.querySelector('[data-no]')?.addEventListener('click', useQuestion);
+    root.querySelector('[data-guess]')?.addEventListener('click', showGuessPicks);
+    newSecret();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .secret {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #4a2878;
+    margin: 0.5rem 0;
+  }
+
+  .q-left {
+    font-weight: 800;
+    color: #1864ab;
+  }
+</style>

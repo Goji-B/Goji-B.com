@@ -1,0 +1,87 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-tangram data-music-theme="bouncy">
+  <h2>Shape picture</h2>
+  <p class="gr-msg" data-msg>Which pieces make this?</p>
+  <p class="goal" data-goal>🏠 House</p>
+  <div class="pick-row" data-picks></div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const ROUNDS = [
+    { goal: '🏠 House', correct: '▲ ■ ■', wrong: ['● ● ●', '▲ ▲ ▲'] },
+    { goal: '🐱 Cat', correct: '▲ ● ■', wrong: ['■ ■ ■', '● ▲ ●'] },
+    { goal: '⛵ Boat', correct: '▲ ■', wrong: ['● ▲', '■ ■ ■'] },
+    { goal: '🌲 Tree', correct: '▲ ■', wrong: ['● ●', '▲ ▲ ■'] },
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-gr-tangram]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'bouncy');
+    const msg = root.querySelector('[data-msg]');
+    const goal = root.querySelector('[data-goal]');
+    const picks = root.querySelector('[data-picks]');
+
+    function round() {
+      const r = ROUNDS[Math.floor(Math.random() * ROUNDS.length)];
+      goal.textContent = r.goal;
+      msg.textContent = 'Which pieces make this?';
+      picks.innerHTML = '';
+      const options = [r.correct, ...r.wrong].sort(() => Math.random() - 0.5);
+      options.forEach((opt) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'pick';
+        b.textContent = opt;
+        b.addEventListener('click', () => {
+          if (opt === r.correct) {
+            msg.textContent = 'Yes!';
+            audio.speak('Great!');
+            audio.playSfx('match');
+            setTimeout(round, 900);
+          } else {
+            msg.textContent = 'Try another set.';
+            audio.playSfx('buzz');
+          }
+        });
+        picks.appendChild(b);
+      });
+    }
+
+    round();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .goal {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0.25rem 0 0.5rem;
+  }
+
+  .pick-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  :global(.pick) {
+    border: 2px solid #74c0fc;
+    background: #e7f5ff;
+    border-radius: 12px;
+    padding: 0.55rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+  }
+</style>

@@ -1,0 +1,108 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-story data-music-theme="dreamy">
+  <h2>Story building</h2>
+  <p class="turn" data-turn>Player 1's turn</p>
+  <p class="story-box" data-story>Once upon a time…</p>
+  <div class="chip-row" data-chips></div>
+  <div class="gr-btn-row">
+    <button class="gr-btn gr-btn--ghost" data-clear type="button">New story</button>
+  </div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const CHIPS = [
+    'there was a friendly dragon',
+    'who loved to dance',
+    'Suddenly,',
+    'a rainbow appeared',
+    'They found a magic door',
+    'and met a talking cat',
+    'The end!',
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-gr-story]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'dreamy');
+    const turnEl = root.querySelector('[data-turn]');
+    const storyEl = root.querySelector('[data-story]');
+    const chips = root.querySelector('[data-chips]');
+    let player = 1;
+
+    function renderChips() {
+      chips.innerHTML = '';
+      CHIPS.forEach((text) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip';
+        b.textContent = text;
+        b.addEventListener('click', () => {
+          const sep = storyEl.textContent.endsWith('…') ? ' ' : ' ';
+          storyEl.textContent += sep + text;
+          player = player === 1 ? 2 : 1;
+          turnEl.textContent = `Player ${player}'s turn`;
+          audio.playSfx('tap');
+          audio.speak(text);
+        });
+        chips.appendChild(b);
+      });
+    }
+
+    root.querySelector('[data-clear]')?.addEventListener('click', () => {
+      storyEl.textContent = 'Once upon a time…';
+      player = 1;
+      turnEl.textContent = "Player 1's turn";
+      audio.speak('New story');
+    });
+
+    renderChips();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .turn {
+    font-weight: 800;
+    color: #5c3d8f;
+    margin: 0 0 0.35rem;
+  }
+
+  .story-box {
+    text-align: left;
+    background: #fff9db;
+    border: 2px solid #fcc419;
+    border-radius: 12px;
+    padding: 0.65rem;
+    min-height: 4rem;
+    line-height: 1.45;
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    margin-bottom: 0.35rem;
+  }
+
+  :global(.chip) {
+    border: 2px solid #9b6fd4;
+    background: #f3f0ff;
+    border-radius: 999px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #4a2878;
+  }
+</style>

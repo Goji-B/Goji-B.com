@@ -1,0 +1,95 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play" data-gr-simon data-music-theme="playful">
+  <h2>Simon Says</h2>
+  <p class="score" data-score>Streak: 0</p>
+  <p class="command" data-cmd></p>
+  <div class="gr-btn-row">
+    <button class="gr-btn gr-btn--good" data-do type="button">Do it!</button>
+    <button class="gr-btn gr-btn--ghost" data-skip type="button">Skip</button>
+  </div>
+  <div class="gr-btn-row">
+    <button class="gr-btn" data-next type="button">Next command</button>
+  </div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const COMMANDS = [
+    { text: 'Touch your nose', simon: true },
+    { text: 'Jump once', simon: true },
+    { text: 'Clap your hands', simon: true },
+    { text: 'Spin around', simon: false },
+    { text: 'Simon says: stomp your feet', simon: true },
+    { text: 'Simon says: wave hello', simon: true },
+    { text: 'Stick out your tongue', simon: false },
+    { text: 'Simon says: hands on hips', simon: true },
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-gr-simon]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'playful');
+    const cmd = root.querySelector('[data-cmd]');
+    const scoreEl = root.querySelector('[data-score]');
+    let current = COMMANDS[0];
+    let streak = 0;
+
+    function nextCmd() {
+      current = COMMANDS[Math.floor(Math.random() * COMMANDS.length)];
+      cmd.textContent = current.text;
+      audio.speak(current.text);
+    }
+
+    function answer(didIt) {
+      const simon = current.text.toLowerCase().includes('simon says');
+      const ok = (simon && didIt) || (!simon && !didIt);
+      if (ok) {
+        streak += 1;
+        scoreEl.textContent = `Streak: ${streak}`;
+        audio.playSfx('match');
+        audio.speak('Good!');
+      } else {
+        streak = 0;
+        scoreEl.textContent = 'Streak: 0';
+        audio.playSfx('buzz');
+        audio.speak('Oops!');
+      }
+      nextCmd();
+    }
+
+    root.querySelector('[data-do]')?.addEventListener('click', () => answer(true));
+    root.querySelector('[data-skip]')?.addEventListener('click', () => answer(false));
+    root.querySelector('[data-next]')?.addEventListener('click', nextCmd);
+    nextCmd();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .score {
+    font-weight: 800;
+    color: #2f9e44;
+    margin: 0;
+  }
+
+  .command {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #4a2878;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: #f3f0ff;
+    border-radius: 12px;
+  }
+</style>

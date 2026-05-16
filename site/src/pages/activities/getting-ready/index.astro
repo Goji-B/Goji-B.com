@@ -1,0 +1,42 @@
+---
+import ActivityLayout from '../../../layouts/ActivityLayout.astro';
+import GettingReadyHubGrid from '../../../components/activities/GettingReadyHubGrid.astro';
+---
+
+<ActivityLayout title="Activities — Getting Ready">
+  <div class="top-row">
+    <a class="home-btn" href="/activities/">Activities World</a>
+  </div>
+  <h1>Activities — Getting Ready</h1>
+  <p>New brain games for phone and tablet. Play together.</p>
+  <GettingReadyHubGrid />
+
+  <style>
+    .top-row {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 0.35rem;
+    }
+
+    .home-btn {
+      text-decoration: none;
+      font-weight: 700;
+      color: #ffffff;
+      background: #7b4bb7;
+      border: 2px solid #5f3dc4;
+      border-radius: 999px;
+      padding: 0.45rem 0.95rem;
+      font-size: 0.95rem;
+    }
+
+    h1,
+    p {
+      text-align: center;
+    }
+
+    h1 {
+      color: #4a2878;
+      font-size: 1.75rem;
+    }
+  </style>
+</ActivityLayout>

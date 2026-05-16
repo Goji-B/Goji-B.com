@@ -1,4 +1,7 @@
 <div class="activities-grid">
+  <a class="activity-card activity-card--getting-ready" href="/activities/getting-ready/"
+    >Activities — Getting Ready</a
+  >
   <a class="activity-card" href="/activities/tic-tac-toe/">Tic-Tac-Toe</a>
   <a class="activity-card" href="/activities/color-match-tap/">Color Match Tap</a>
   <a class="activity-card" href="/activities/animal-memory-cards/">Animal Memory Cards</a>
@@ -32,5 +35,16 @@
   .activity-card:hover {
     transform: translateY(-2px);
     background: linear-gradient(135deg, #ffdcb8, #cdeeff);
+  }
+
+  .activity-card--getting-ready {
+    border-color: #7b4bb7;
+    background: linear-gradient(135deg, #fff3bf, #e5dbff);
+    grid-column: 1 / -1;
+    font-size: 1.12rem;
+  }
+
+  .activity-card--getting-ready:hover {
+    background: linear-gradient(135deg, #ffe066, #d0bfff);
   }
 </style>
