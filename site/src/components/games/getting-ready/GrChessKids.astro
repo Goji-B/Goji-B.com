@@ -93,13 +93,14 @@ import './gr-game.css';
       const dc = Math.abs(tc - fc);
       const target = state[tr][tc];
       if (p === 'B') {
-        if (dc > 1 || dr < 1 || dr > 2) return false;
-        if (dr === 2 && dc === 1 && target === 'R') {
+        if (dr !== 1 || dc > 1) return false;
+        if (dc === 1) {
+          if (target !== 'R') return false;
           state[tr][tc] = 'B';
           state[fr][fc] = '';
           return true;
         }
-        if (dr === 1 && dc === 0 && !target) {
+        if (!target) {
           state[tr][tc] = 'B';
           state[fr][fc] = '';
           return true;
@@ -107,13 +108,14 @@ import './gr-game.css';
         return false;
       }
       if (p === 'R') {
-        if (dc > 1 || dr > -1 || dr < -2) return false;
-        if (dr === -2 && dc === 1 && target === 'B') {
+        if (dr !== -1 || dc > 1) return false;
+        if (dc === 1) {
+          if (target !== 'B') return false;
           state[tr][tc] = 'R';
           state[fr][fc] = '';
           return true;
         }
-        if (dr === -1 && dc === 0 && !target) {
+        if (!target) {
           state[tr][tc] = 'R';
           state[fr][fc] = '';
           return true;
