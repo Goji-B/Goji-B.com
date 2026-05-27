@@ -5,10 +5,11 @@ import './gr-game.css';
 <section class="gr-play" data-gr-chess data-music-theme="acoustic">
   <h2>Pawn battle</h2>
   <p class="gr-msg" data-msg>Blue starts. Tap a pawn, then a square.</p>
+  <p class="score" data-score>Captured — Blue: 0 · Red: 0</p>
   <p class="turn" data-turn>Turn: Blue</p>
   <div class="board" data-board></div>
   <div class="gr-btn-row">
-    <button class="gr-btn gr-btn--ghost" data-reset type="button">Reset</button>
+    <button class="gr-btn gr-btn--ghost" data-reset type="button">New game</button>
   </div>
 </section>
 
@@ -22,18 +23,30 @@ import './gr-game.css';
     bindActivityUnlock(root, 'acoustic');
     const board = root.querySelector('[data-board]');
     const msg = root.querySelector('[data-msg]');
+    const scoreEl = root.querySelector('[data-score]');
     const turnEl = root.querySelector('[data-turn]');
     const resetBtn = root.querySelector('[data-reset]');
     const SIZE = 5;
+    const RESTART_MS = 2400;
     let state = [];
     let turn = 'B';
     let selected = null;
+    let capturesB = 0;
+    let capturesR = 0;
+    let gameOver = false;
+    let restartTimer = null;
 
     function empty() {
       return Array.from({ length: SIZE }, () => Array(SIZE).fill(''));
     }
 
+    function updateScore() {
+      scoreEl.textContent = `Captured — Blue: ${capturesB} · Red: ${capturesR}`;
+    }
+
     function setup() {
+      if (restartTimer) clearTimeout(restartTimer);
+      restartTimer = null;
       state = empty();
       for (let c = 0; c < SIZE; c++) {
         state[0][c] = 'B';
@@ -41,8 +54,13 @@ import './gr-game.css';
       }
       turn = 'B';
       selected = null;
+      capturesB = 0;
+      capturesR = 0;
+      gameOver = false;
+      updateScore();
       render();
       msg.textContent = 'Blue starts. Tap a pawn, then a square.';
+      turnEl.textContent = 'Turn: Blue';
     }
 
     function render() {
@@ -58,20 +76,51 @@ import './gr-game.css';
           if (p === 'B') cell.classList.add('blue');
           if (p === 'R') cell.classList.add('red');
           if (selected && selected.r === r && selected.c === c) cell.classList.add('sel');
+          cell.disabled = gameOver;
           cell.addEventListener('click', () => onCell(r, c));
           board.appendChild(cell);
         }
       }
-      turnEl.textContent = turn === 'B' ? 'Turn: Blue' : 'Turn: Red';
+      if (!gameOver) {
+        turnEl.textContent = turn === 'B' ? 'Turn: Blue' : 'Turn: Red';
+      }
+    }
+
+    function hasLegalMoves(player) {
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (state[r][c] !== player) continue;
+          if (player === 'B') {
+            const nr = r + 1;
+            if (nr >= SIZE) continue;
+            if (!state[nr][c]) return true;
+            if (c > 0 && state[nr][c - 1] === 'R') return true;
+            if (c + 1 < SIZE && state[nr][c + 1] === 'R') return true;
+          } else {
+            const nr = r - 1;
+            if (nr < 0) continue;
+            if (!state[nr][c]) return true;
+            if (c > 0 && state[nr][c - 1] === 'B') return true;
+            if (c + 1 < SIZE && state[nr][c + 1] === 'B') return true;
+          }
+        }
+      }
+      return false;
     }
 
     function onCell(r, c) {
+      if (gameOver) return;
       const piece = state[r][c];
       if (selected) {
-        if (tryMove(selected.r, selected.c, r, c)) {
+        const moved = tryMove(selected.r, selected.c, r, c);
+        if (moved) {
           selected = null;
           if (checkWin()) return;
           turn = turn === 'B' ? 'R' : 'B';
+          if (!hasLegalMoves(turn)) {
+            endStalemate();
+            return;
+          }
           render();
           audio.playSfx('tap');
           return;
@@ -98,6 +147,8 @@ import './gr-game.css';
           if (target !== 'R') return false;
           state[tr][tc] = 'B';
           state[fr][fc] = '';
+          capturesB += 1;
+          updateScore();
           return true;
         }
         if (!target) {
@@ -113,6 +164,8 @@ import './gr-game.css';
           if (target !== 'B') return false;
           state[tr][tc] = 'R';
           state[fr][fc] = '';
+          capturesR += 1;
+          updateScore();
           return true;
         }
         if (!target) {
@@ -131,16 +184,34 @@ import './gr-game.css';
       const blueEnd = state[SIZE - 1].some((x) => x === 'B');
       const redEnd = state[0].some((x) => x === 'R');
       if (blues === 0 || redEnd) {
-        msg.textContent = 'Red wins!';
+        gameOver = true;
+        msg.textContent = `Red wins! Captured — Blue: ${capturesB}, Red: ${capturesR}`;
+        turnEl.textContent = '—';
         audio.speak('Red wins');
+        audio.playSfx('fanfare');
+        render();
         return true;
       }
       if (reds === 0 || blueEnd) {
-        msg.textContent = 'Blue wins!';
+        gameOver = true;
+        msg.textContent = `Blue wins! Captured — Blue: ${capturesB}, Red: ${capturesR}`;
+        turnEl.textContent = '—';
         audio.speak('Blue wins');
+        audio.playSfx('fanfare');
+        render();
         return true;
       }
       return false;
+    }
+
+    function endStalemate() {
+      gameOver = true;
+      msg.textContent = `Stalemate! Captured — Blue: ${capturesB}, Red: ${capturesR}. New game…`;
+      turnEl.textContent = '—';
+      audio.speak('Stalemate. New game.');
+      audio.playSfx('draw');
+      render();
+      restartTimer = window.setTimeout(() => setup(), RESTART_MS);
     }
 
     resetBtn?.addEventListener('click', setup);
@@ -152,6 +223,13 @@ import './gr-game.css';
 </script>
 
 <style>
+  .score {
+    font-weight: 800;
+    font-size: 1rem;
+    color: #4a2878;
+    margin: 0 0 0.25rem;
+  }
+
   .turn {
     font-weight: 800;
     color: #4a2878;
@@ -171,6 +249,7 @@ import './gr-game.css';
 
   :global(.sq) {
     all: unset;
+    box-sizing: border-box;
     aspect-ratio: 1;
     display: flex;
     align-items: center;
@@ -179,6 +258,11 @@ import './gr-game.css';
     background: #f8f0ff;
     cursor: pointer;
     border-radius: 4px;
+  }
+
+  :global(.sq:disabled) {
+    cursor: default;
+    opacity: 0.85;
   }
 
   :global(.sq.dark) {
