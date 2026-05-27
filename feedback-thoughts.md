@@ -143,8 +143,8 @@ Work through **one job at a time**. Do not wire the live site (Phase C) until Ph
 | **A4** | Set **Repository permissions → Issues: Read and write**. Webhook: **off** for v1 (optional later). | [ ] |
 | **A5** | **Install** the App on **`improvements` only** (not on public `Goji-B.com`). | [ ] |
 | **A6** | Save securely (password manager / offline): **App ID**, **Installation ID**, **private key** (`.pem`, download once). | [ ] |
-| **A7** | Create GitHub **labels** (optional but recommended): `status/new`, `hub/main`, `hub/getting-ready`, and `game/<slug>` for games you expect feedback on first (add more labels as needed). | [ ] |
-| **A8** | Decide issue **title/body format** (see §7 draft template); adjust when §8 open items are answered. | [ ] |
+| **A7** | Create GitHub **labels** (optional but recommended): `status/new`, `hub/main`, `hub/getting-ready`, and `game/<slug>` for games you expect feedback on first (add more labels as needed). | [x] |
+| **A8** | Decide issue **title/body format** (see §7 draft template); adjust when §8 open items are answered. | [x] |
 
 ### Phase B — Cloudflare Worker (form → Issue)
 
@@ -154,9 +154,9 @@ Work through **one job at a time**. Do not wire the live site (Phase C) until Ph
 | **B2** | Open **Workers & Pages → Create → Worker**. Name e.g. `goji-feedback`. Note the URL: `https://goji-feedback.<subdomain>.workers.dev`. | [ ] |
 | **B3** | In Worker **Settings → Variables and Secrets**, add secrets (never commit these): `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` (full PEM), `GITHUB_INSTALLATION_ID`, `GITHUB_REPO` (e.g. `Goji-B/improvements`). | [ ] |
 | **B4** | Add variable `ALLOWED_ORIGIN` = `https://goji-b.com` (for CORS). | [ ] |
-| **B5** | Deploy Worker script that: accepts **POST** JSON; validates `game`, `email`, `suggestion`; checks **honeypot**; builds GitHub App JWT → installation token → **creates Issue** with labels. | [ ] |
-| **B6** | Add **CORS**: respond to `OPTIONS`; `Access-Control-Allow-Origin: https://goji-b.com` on success/error. | [ ] |
-| **B7** | Add **rate limiting** (simple per-IP or Cloudflare rules) and reject oversized bodies. | [ ] |
+| **B5** | Deploy Worker script that: accepts **POST** JSON; validates `game`, `email`, `suggestion`; checks **honeypot**; builds GitHub App JWT → installation token → **creates Issue** with labels. | [x] code in `improvements` repo `worker/` — deploy pending |
+| **B6** | Add **CORS**: respond to `OPTIONS`; `Access-Control-Allow-Origin: https://goji-b.com` on success/error. | [x] in worker code |
+| **B7** | Add **rate limiting** (simple per-IP or Cloudflare rules) and reject oversized bodies. | [x] max body size in worker; optional CF rules later |
 | **B8** | **Test with curl** (or Postman): POST sample JSON → confirm a new Issue appears in `improvements` with correct game, email, text, timestamp/URL in body. | [ ] |
 | **B9** | Test **reject** cases: missing email, empty suggestion, filled honeypot, wrong HTTP method. | [ ] |
 | **B10** | Record the **Worker URL** in a safe place; this is the only endpoint the public site will call. | [ ] |
