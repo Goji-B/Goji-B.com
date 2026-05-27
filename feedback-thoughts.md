@@ -137,8 +137,8 @@ Work through **one job at a time**. Do not wire the live site (Phase C) until Ph
 
 | # | Job | Done |
 |---|-----|------|
-| **A1** | Create a **private** GitHub repository named **`improvements`** (under your account or `Goji-B` org). | [ ] |
-| **A2** | Add a short README describing: “One GitHub Issue per activity suggestion; not live site code.” | [ ] |
+| **A1** | Create a **private** GitHub repository named **`improvements`** (under your account or `Goji-B` org). | [x] |
+| **A2** | Add a short README describing: “One GitHub Issue per activity suggestion; not live site code.” | [x] |
 | **A3** | Go to **GitHub → Settings → Developer settings → GitHub Apps → New GitHub App**. Name e.g. `Goji-B Feedback`. Homepage: `https://goji-b.com`. | [ ] |
 | **A4** | Set **Repository permissions → Issues: Read and write**. Webhook: **off** for v1 (optional later). | [ ] |
 | **A5** | **Install** the App on **`improvements` only** (not on public `Goji-B.com`). | [ ] |
