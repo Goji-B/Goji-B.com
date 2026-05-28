@@ -1,0 +1,40 @@
+---
+interface Props {
+  slug: string;
+  hub: 'main' | 'getting-ready';
+  title?: string;
+}
+
+const { slug, hub, title } = Astro.props;
+const params = new URLSearchParams({ game: slug, hub });
+if (title) params.set('title', title);
+const href = `/activities/feedback/?${params.toString()}`;
+---
+
+<p class="feedback-blob-wrap">
+  <a class="feedback-blob" href={href}>Suggest an improvement</a>
+</p>
+
+<style>
+  .feedback-blob-wrap {
+    margin: 1rem 0 0.25rem;
+    text-align: center;
+  }
+
+  .feedback-blob {
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #4a2878;
+    background: rgba(255, 255, 255, 0.85);
+    border: 2px dashed #9b6fd4;
+    border-radius: 999px;
+    padding: 0.55rem 1rem;
+  }
+
+  .feedback-blob:hover {
+    background: #f3e8ff;
+    border-style: solid;
+  }
+</style>

@@ -1,0 +1,283 @@
+---
+import ActivityLayout from '../../layouts/ActivityLayout.astro';
+import { FEEDBACK_WORKER_URL } from '../../data/activityFeedbackConfig';
+import { gettingReadyGames, getGettingReadyGame } from '../../data/gettingReadyGames';
+import { mainActivities, getMainActivity } from '../../data/mainActivities';
+
+const gameSlug = (Astro.url.searchParams.get('game') ?? '').trim();
+const hubParam = Astro.url.searchParams.get('hub') ?? '';
+const hub = hubParam === 'main' ? 'main' : 'getting-ready';
+const titleParam = Astro.url.searchParams.get('title') ?? '';
+
+const grGame = gameSlug ? getGettingReadyGame(gameSlug) : undefined;
+const mainGame = gameSlug ? getMainActivity(gameSlug) : undefined;
+const gameTitle =
+  titleParam || grGame?.title || mainGame?.title || (gameSlug ? gameSlug : '');
+const known = !!(grGame || mainGame || (gameSlug && titleParam));
+
+const backHref = gameSlug
+  ? hub === 'main'
+    ? `/activities/${gameSlug}/`
+    : `/activities/getting-ready/${gameSlug}/`
+  : '/activities/';
+
+const allGames = [
+  ...mainActivities.map((g) => ({ slug: g.slug, title: g.title, hub: 'main' as const })),
+  ...gettingReadyGames.map((g) => ({ slug: g.slug, title: g.title, hub: 'getting-ready' as const })),
+].sort((a, b) => a.title.localeCompare(b.title));
+---
+
+<ActivityLayout title="Suggest an improvement">
+  <section class="feedback-page" data-feedback-form data-worker-url={FEEDBACK_WORKER_URL}>
+    <h1>Suggest an improvement</h1>
+    <p class="intro">We’re still improving these games. Tell us what would make this one more fun or easier to play.</p>
+
+    <form class="form" data-form novalidate>
+      <div class="field" data-game-field>
+        <label for="game-select">This suggestion is for</label>
+        {known ? (
+          <>
+            <p class="game-name" id="game-display">{gameTitle}{grGame?.emoji ? ` ${grGame.emoji}` : ''}</p>
+            <input type="hidden" name="game" value={gameSlug} data-game-input />
+            <input type="hidden" name="hub" value={hub} data-hub-input />
+          </>
+        ) : (
+          <select id="game-select" name="game" required data-game-select>
+            <option value="">Choose an activity…</option>
+            {allGames.map((g) => (
+              <option value={g.slug} data-hub={g.hub} selected={g.slug === gameSlug}>
+                {g.title}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <div class="field">
+        <label for="email">Your email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" />
+        <p class="hint">We need your email to contact you. We won’t use it for marketing.</p>
+      </div>
+
+      <div class="field">
+        <label for="suggestion">Your suggestion</label>
+        <textarea
+          id="suggestion"
+          name="suggestion"
+          required
+          minlength="10"
+          maxlength="2000"
+          rows="5"
+          placeholder="What would you change? What was confusing or fun?"
+        ></textarea>
+      </div>
+
+      <div class="hp" aria-hidden="true">
+        <label for="website">Website</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <p class="msg" data-msg hidden></p>
+
+      <button class="submit" type="submit" data-submit>Send suggestion</button>
+    </form>
+
+    <p class="nav">
+      {gameSlug && known && <a href={backHref}>← Back to {gameTitle}</a>}
+      <a href="/activities/">Activities home</a>
+    </p>
+  </section>
+</ActivityLayout>
+
+<script>
+  function initFeedback() {
+    const root = document.querySelector('[data-feedback-form]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+
+    const workerUrl = root.getAttribute('data-worker-url');
+    const form = root.querySelector('[data-form]');
+    const msg = root.querySelector('[data-msg]');
+    const submitBtn = root.querySelector('[data-submit]');
+    const gameSelect = root.querySelector('[data-game-select]');
+    const gameInput = root.querySelector('[data-game-input]');
+    const hubInput = root.querySelector('[data-hub-input]');
+
+    function showMsg(text, ok) {
+      if (!msg || !submitBtn) return;
+      msg.hidden = false;
+      msg.textContent = text;
+      msg.classList.toggle('ok', ok);
+      msg.classList.toggle('err', !ok);
+    }
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!workerUrl) {
+        showMsg('Feedback is not configured yet. Please try again later.', false);
+        return;
+      }
+
+      const fd = new FormData(form);
+      let game = String(fd.get('game') || '').trim();
+      let hub = String(fd.get('hub') || 'getting-ready').trim();
+      if (gameSelect) {
+        const opt = gameSelect.selectedOptions[0];
+        game = String(fd.get('game') || '').trim();
+        hub = opt?.dataset.hub || 'getting-ready';
+      } else if (gameInput) {
+        game = gameInput.value;
+        hub = hubInput?.value || 'getting-ready';
+      }
+
+      const payload = {
+        game,
+        hub,
+        email: String(fd.get('email') || '').trim(),
+        suggestion: String(fd.get('suggestion') || '').trim(),
+        website: String(fd.get('website') || '').trim(),
+        gameTitle:
+          gameSelect?.selectedOptions[0]?.textContent?.trim() ||
+          root.querySelector('#game-display')?.textContent?.trim() ||
+          game,
+        pageUrl: game
+          ? `${location.origin}${hub === 'main' ? `/activities/${game}/` : `/activities/getting-ready/${game}/`}`
+          : location.href,
+      };
+
+      submitBtn.disabled = true;
+      showMsg('Sending…', true);
+
+      try {
+        const res = await fetch(workerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          form.reset();
+          showMsg('Thanks! We read every suggestion.', true);
+        } else {
+          showMsg(data.error || 'Could not send. Please try again.', false);
+        }
+      } catch {
+        showMsg('Network error. Please try again.', false);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  initFeedback();
+  document.addEventListener('astro:page-load', initFeedback);
+</script>
+
+<style>
+  .feedback-page {
+    max-width: 420px;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .feedback-page h1 {
+    font-size: 1.45rem;
+    color: #4a2878;
+    text-align: center;
+  }
+
+  .intro {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .field {
+    margin-bottom: 0.85rem;
+  }
+
+  .field label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: #333;
+  }
+
+  .game-name {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #4a2878;
+    margin: 0;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    padding: 0.45rem 0.5rem;
+    border: 2px solid #c4b5fd;
+    border-radius: 8px;
+  }
+
+  .hint {
+    font-size: 0.82rem;
+    color: #555;
+    margin: 0.25rem 0 0;
+  }
+
+  .hp {
+    position: absolute;
+    left: -9999px;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .msg {
+    font-weight: 700;
+    margin: 0.5rem 0;
+    text-align: center;
+  }
+
+  .msg.ok {
+    color: #2b8a3e;
+  }
+
+  .msg.err {
+    color: #c92a2a;
+  }
+
+  .submit {
+    display: block;
+    width: 100%;
+    font: inherit;
+    font-weight: 800;
+    font-size: 1.05rem;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 999px;
+    background: #7b4bb7;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .submit:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .nav {
+    margin-top: 1.25rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .nav a {
+    color: #2f6f4e;
+    font-weight: 700;
+  }
+</style>

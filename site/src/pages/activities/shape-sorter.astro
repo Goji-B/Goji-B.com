@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import ShapeSorter from '../../components/games/ShapeSorter.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Shape Sorter Activity">
   <ShapeSorter />
+  <ActivityFeedbackBlob slug="shape-sorter" hub="main" title="Shape Sorter" />
   <BackToActivities />
 </ActivityLayout>

@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import BubblePopABC from '../../components/games/BubblePopABC.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Bubble Pop ABC Activity">
   <BubblePopABC />
+  <ActivityFeedbackBlob slug="bubble-pop-abc" hub="main" title="Bubble Pop ABC" />
   <BackToActivities />
 </ActivityLayout>

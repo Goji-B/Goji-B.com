@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import AnimalMemoryCards from '../../components/games/AnimalMemoryCards.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Animal Memory Cards Activity">
   <AnimalMemoryCards />
+  <ActivityFeedbackBlob slug="animal-memory-cards" hub="main" title="Animal Memory Cards" />
   <BackToActivities />
 </ActivityLayout>

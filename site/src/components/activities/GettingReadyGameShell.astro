@@ -1,5 +1,6 @@
 ---
 import type { GettingReadyGame } from '../../data/gettingReadyGames';
+import ActivityFeedbackBlob from './ActivityFeedbackBlob.astro';
 
 interface Props {
   game: GettingReadyGame;
@@ -19,6 +20,7 @@ const { game } = Astro.props;
     ))}
   </ul>
   <slot />
+  <ActivityFeedbackBlob slug={game.slug} hub="getting-ready" title={game.title} />
 </article>
 
 <style>

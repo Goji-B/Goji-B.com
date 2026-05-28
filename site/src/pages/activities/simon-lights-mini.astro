@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import SimonLightsMini from '../../components/games/SimonLightsMini.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Simon Lights Mini Activity">
   <SimonLightsMini />
+  <ActivityFeedbackBlob slug="simon-lights-mini" hub="main" title="Simon Lights Mini" />
   <BackToActivities />
 </ActivityLayout>

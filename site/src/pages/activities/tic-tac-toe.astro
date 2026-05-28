@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import TicTacToe from '../../components/TicTacToe.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Tic-Tac-Toe Activity">
   <TicTacToe />
+  <ActivityFeedbackBlob slug="tic-tac-toe" hub="main" title="Tic-Tac-Toe" />
   <BackToActivities />
 </ActivityLayout>

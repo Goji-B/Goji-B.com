@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import TraceThePath from '../../components/games/TraceThePath.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Trace the Path Activity">
   <TraceThePath />
+  <ActivityFeedbackBlob slug="trace-the-path" hub="main" title="Trace the Path" />
   <BackToActivities />
 </ActivityLayout>

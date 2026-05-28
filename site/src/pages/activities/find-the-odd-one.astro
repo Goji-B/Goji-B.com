@@ -1,10 +1,12 @@
 ---
 import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import FindTheOddOne from '../../components/games/FindTheOddOne.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
 import BackToActivities from '../../components/activities/BackToActivities.astro';
 ---
 
 <ActivityLayout title="Find the Odd One Activity">
   <FindTheOddOne />
+  <ActivityFeedbackBlob slug="find-the-odd-one" hub="main" title="Find the Odd One" />
   <BackToActivities />
 </ActivityLayout>
