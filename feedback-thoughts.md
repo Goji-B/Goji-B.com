@@ -1,10 +1,13 @@
 # Feedback on Activities — design notes
 
-**Status:** Plan agreed — **not implemented** on the site yet. Do jobs in **§6** in order.  
+**Status:** **Phases A–C live** (2026-05-27). Ongoing: Phase D (review on GitHub). Phase E deferred.  
 **Scope:** All activity game pages under **`/activities/`** (including current and future promoted games).  
-**Repo:** [Goji-B.com](https://github.com/Goji-B/Goji-B.com) · Live hub: https://goji-b.com/activities/getting-ready/  
-**Backend (for this phase):** Cloudflare Worker + GitHub App writing into a private repo: `improvements`.  
-**Pi / AMS note:** `activities-management-system.md` is deferred for now (kept for later, richer workflow).
+**Public site:** [Goji-B.com](https://github.com/Goji-B/Goji-B.com) · Feedback form: https://goji-b.com/activities/feedback/  
+**Improvements inbox:** https://github.com/Goji-B/improvements (private)  
+**Worker:** `https://goji-feedback.goji-feedback.workers.dev` (config: `site/src/data/activityFeedbackConfig.ts`)  
+**GitHub App:** `Goji-B Feedback` (installed on `improvements` only)  
+**Worker source:** `Goji-B/improvements` repo → `worker/`  
+**Pi / AMS note:** `activities-management-system.md` deferred (no Pi for this phase).
 
 ---
 
@@ -131,48 +134,48 @@ The Worker uses a **GitHub App** to create a **new Issue** in a **private repo**
 
 ## 6. Implementation jobs (do in order)
 
-Work through **one job at a time**. Do not wire the live site (Phase C) until Phase B passes a curl test.
+Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you review or fix games.
 
-### Phase A — GitHub (`improvements` repo + App)
+### Phase A — GitHub (`improvements` repo + App) — complete
 
 | # | Job | Done |
 |---|-----|------|
 | **A1** | Create a **private** GitHub repository named **`improvements`** (under your account or `Goji-B` org). | [x] |
 | **A2** | Add a short README describing: “One GitHub Issue per activity suggestion; not live site code.” | [x] |
-| **A3** | Go to **GitHub → Settings → Developer settings → GitHub Apps → New GitHub App**. Name e.g. `Goji-B Feedback`. Homepage: `https://goji-b.com`. | [ ] |
-| **A4** | Set **Repository permissions → Issues: Read and write**. Webhook: **off** for v1 (optional later). | [ ] |
-| **A5** | **Install** the App on **`improvements` only** (not on public `Goji-B.com`). | [ ] |
-| **A6** | Save securely (password manager / offline): **App ID**, **Installation ID**, **private key** (`.pem`, download once). | [ ] |
-| **A7** | Create GitHub **labels** (optional but recommended): `status/new`, `hub/main`, `hub/getting-ready`, and `game/<slug>` for games you expect feedback on first (add more labels as needed). | [x] |
-| **A8** | Decide issue **title/body format** (see §7 draft template); adjust when §8 open items are answered. | [x] |
+| **A3** | Go to **GitHub → Settings → Developer settings → GitHub Apps → New GitHub App**. Name **`Goji-B Feedback`**. Homepage: `https://goji-b.com`. | [x] |
+| **A4** | Set **Repository permissions → Issues: Read and write**. Webhook: **off** for v1 (optional later). | [x] |
+| **A5** | **Install** the App on **`improvements` only** (not on public `Goji-B.com`). | [x] |
+| **A6** | Save securely (password manager / offline): **App ID**, **Installation ID**, **private key** (`.pem`, download once). | [x] in Wrangler secrets |
+| **A7** | Create GitHub **labels**: `status/new`, `status/done`, `status/wont-fix`, `hub/main`, `hub/getting-ready`, `game/<slug>` (142 games). | [x] |
+| **A8** | Issue **title/body format** (see §7); implemented in Worker. | [x] |
 
-### Phase B — Cloudflare Worker (form → Issue)
-
-| # | Job | Done |
-|---|-----|------|
-| **B1** | Create a **free Cloudflare account** at [cloudflare.com](https://www.cloudflare.com) if you do not have one. | [ ] |
-| **B2** | Open **Workers & Pages → Create → Worker**. Name e.g. `goji-feedback`. Note the URL: `https://goji-feedback.<subdomain>.workers.dev`. | [ ] |
-| **B3** | In Worker **Settings → Variables and Secrets**, add secrets (never commit these): `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY` (full PEM), `GITHUB_INSTALLATION_ID`, `GITHUB_REPO` (e.g. `Goji-B/improvements`). | [ ] |
-| **B4** | Add variable `ALLOWED_ORIGIN` = `https://goji-b.com` (for CORS). | [ ] |
-| **B5** | Deploy Worker script that: accepts **POST** JSON; validates `game`, `email`, `suggestion`; checks **honeypot**; builds GitHub App JWT → installation token → **creates Issue** with labels. | [x] code in `improvements` repo `worker/` — deploy pending |
-| **B6** | Add **CORS**: respond to `OPTIONS`; `Access-Control-Allow-Origin: https://goji-b.com` on success/error. | [x] in worker code |
-| **B7** | Add **rate limiting** (simple per-IP or Cloudflare rules) and reject oversized bodies. | [x] max body size in worker; optional CF rules later |
-| **B8** | **Test with curl** (or Postman): POST sample JSON → confirm a new Issue appears in `improvements` with correct game, email, text, timestamp/URL in body. | [ ] |
-| **B9** | Test **reject** cases: missing email, empty suggestion, filled honeypot, wrong HTTP method. | [ ] |
-| **B10** | Record the **Worker URL** in a safe place; this is the only endpoint the public site will call. | [ ] |
-
-### Phase C — Public site (`Goji-B.com` — implement when user approves build)
+### Phase B — Cloudflare Worker (form → Issue) — complete
 
 | # | Job | Done |
 |---|-----|------|
-| **C1** | Create `site/src/pages/activities/feedback.astro` — form: game (from `?game=`), **required email**, **required suggestion**, honeypot, thank-you state. | [ ] |
-| **C2** | Create shared component e.g. `ActivityFeedbackBlob.astro` — link: `/activities/feedback/?game=<slug>&hub=...`. | [ ] |
-| **C3** | Add blob to **`GettingReadyGameShell.astro`** (all Getting Ready games). | [ ] |
-| **C4** | Add blob to **`ActivityLayout.astro`** (main hub activities). | [ ] |
-| **C5** | Resolve game title from `gettingReadyGames.ts` + main activity inventory; fallback dropdown if `game` unknown. | [ ] |
-| **C6** | Wire form **POST** to Worker URL (public config only — no GitHub secrets in repo). | [ ] |
-| **C7** | **Phone test:** open a game → Suggest an improvement → submit → Issue in `improvements` with correct labels. | [ ] |
-| **C8** | Build, commit, push `main`; verify on live goji-b.com. | [ ] |
+| **B1** | Create a **free Cloudflare account** at [cloudflare.com](https://www.cloudflare.com) if you do not have one. | [x] |
+| **B2** | Worker name **`goji-feedback`**. URL: `https://goji-feedback.goji-feedback.workers.dev`. | [x] |
+| **B3** | Wrangler secrets: `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_INSTALLATION_ID`. | [x] |
+| **B4** | `ALLOWED_ORIGIN` = `https://goji-b.com` (CORS). | [x] |
+| **B5** | Deploy Worker: POST JSON → validate → honeypot → GitHub Issue with labels. | [x] |
+| **B6** | **CORS**: `OPTIONS` + `Access-Control-Allow-Origin: https://goji-b.com`. | [x] |
+| **B7** | Max body size in Worker; optional Cloudflare rate rules later. | [x] |
+| **B8** | POST test → Issue appears in `improvements` with correct game, email, text. | [x] |
+| **B9** | Test **reject** cases (missing email, empty suggestion, honeypot, wrong method). | [ ] optional |
+| **B10** | Worker URL recorded in `site/src/data/activityFeedbackConfig.ts`. | [x] |
+
+### Phase C — Public site (`Goji-B.com`) — complete
+
+| # | Job | Done |
+|---|-----|------|
+| **C1** | `site/src/pages/activities/feedback.astro` — required email + suggestion, honeypot, thank-you. | [x] |
+| **C2** | `ActivityFeedbackBlob.astro` → `/activities/feedback/?game=&hub=`. | [x] |
+| **C3** | Blob on **`GettingReadyGameShell.astro`** (all Getting Ready games). | [x] |
+| **C4** | Blob on all **9 main** activity pages. | [x] |
+| **C5** | Titles from `gettingReadyGames` + `mainActivities.ts`; dropdown fallback. | [x] |
+| **C6** | Form POST to Worker URL via `activityFeedbackConfig.ts`. | [x] |
+| **C7** | Live test: game → Suggest an improvement → submit → Issue in `improvements`. | [x] |
+| **C8** | Build, push `main` (`05633c8`); live on goji-b.com. | [x] |
 
 ### Phase D — Editor workflow (ongoing, no extra infra)
 
@@ -197,9 +200,7 @@ Work through **one job at a time**. Do not wire the live site (Phase C) until Ph
 
 ---
 
-## 7. Issue template (draft for Worker body)
-
-Use this until §8 item 1 is finalized.
+## 7. Issue template (in use — Worker body)
 
 **Title (draft):** `[<game-slug>] <first line of suggestion, max ~80 chars>`
 
@@ -236,12 +237,12 @@ Use this until §8 item 1 is finalized.
 
 ---
 
-## 9. Open decisions (decide before or during Phase B/C)
+## 9. Open decisions (remaining)
 
-1. **Issue title format** — `[slug] summary` (draft in §7) vs summary only?
-2. **Label schema** — full list for `status/*` and when to create `game/*` labels (all 142 games upfront vs on first feedback)?
+1. ~~**Issue title format**~~ — **Done:** `[slug] summary` (§7, live in Worker).
+2. ~~**Label schema**~~ — **Done:** `status/*`, `hub/*`, `game/*` for all 142 games + 3 status + 2 hub.
 3. **Email replies** — auto “we received it” on submit (Phase E4) vs manual reply from GitHub only?
-4. **Privacy wording** — one-liner on form (retention / deletion on request / contact email)?
+4. **Privacy wording** — one-liner on form + Privacy page (Phase E1).
 
 ---
 
@@ -254,4 +255,4 @@ Use this until §8 item 1 is finalized.
 
 ---
 
-*Created 2026-05-16. Agreed 2026-05-27 (§5). Implementation: follow §6 in order; site build (Phase C) when user approves.*
+*Created 2026-05-16. Agreed 2026-05-27 (§5). Phases A–C completed 2026-05-27. Next: Phase D (ongoing), Phase E when needed.*
