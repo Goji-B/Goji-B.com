@@ -3,31 +3,21 @@ import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import { FEEDBACK_WORKER_URL } from '../../data/activityFeedbackConfig';
 import { gettingReadyGames } from '../../data/gettingReadyGames';
 import { mainActivities } from '../../data/mainActivities';
-import { resolveActivityForFeedback } from '../../lib/resolveActivityFeedback';
 
-const gameSlug = (Astro.url.searchParams.get('game') ?? '').trim();
-const hubParam = Astro.url.searchParams.get('hub') ?? '';
-const titleParam = (Astro.url.searchParams.get('title') ?? '').trim();
-
-const resolved = gameSlug ? resolveActivityForFeedback(gameSlug, hubParam) : undefined;
-const hub = resolved?.hub ?? (hubParam === 'main' ? 'main' : 'getting-ready');
-const gameTitle = resolved?.title || titleParam;
-const displayTitle = resolved
-  ? resolved.emoji
-    ? `${resolved.title} ${resolved.emoji}`
-    : resolved.title
-  : gameTitle;
-const fromGame = !!(gameSlug && gameTitle);
-
-const backHref = gameSlug
-  ? hub === 'main'
-    ? `/activities/${gameSlug}/`
-    : `/activities/getting-ready/${gameSlug}/`
-  : '/activities/';
-
+/** Embedded for client-side lookup — static build has no request query string. */
 const allGames = [
-  ...mainActivities.map((g) => ({ slug: g.slug, title: g.title, hub: 'main' as const })),
-  ...gettingReadyGames.map((g) => ({ slug: g.slug, title: g.title, hub: 'getting-ready' as const })),
+  ...mainActivities.map((g) => ({
+    slug: g.slug,
+    title: g.title,
+    hub: 'main' as const,
+    emoji: '',
+  })),
+  ...gettingReadyGames.map((g) => ({
+    slug: g.slug,
+    title: g.title,
+    hub: 'getting-ready' as const,
+    emoji: g.emoji || '',
+  })),
 ].sort((a, b) => a.title.localeCompare(b.title));
 ---
 
@@ -39,31 +29,9 @@ const allGames = [
     <form class="form" data-form novalidate>
       <div class="field" data-game-field>
         <label for="game-title-display">This suggestion is for</label>
-        {fromGame ? (
-          <>
-            <input
-              id="game-title-display"
-              class="game-filled"
-              type="text"
-              value={displayTitle}
-              readonly
-              aria-readonly="true"
-              data-game-title-display
-            />
-            <input type="hidden" name="game" value={gameSlug} data-game-input />
-            <input type="hidden" name="hub" value={hub} data-hub-input />
-            <input type="hidden" name="gameTitle" value={gameTitle} data-game-title-input />
-          </>
-        ) : (
-          <select id="game-title-display" name="game" required data-game-select>
-            <option value="">Choose an activity…</option>
-            {allGames.map((g) => (
-              <option value={g.slug} data-hub={g.hub} data-title={g.title} selected={g.slug === gameSlug}>
-                {g.title}
-              </option>
-            ))}
-          </select>
-        )}
+        <div data-game-slot>
+          <p class="game-loading" data-game-loading>Loading…</p>
+        </div>
       </div>
 
       <div class="field">
@@ -95,28 +63,110 @@ const allGames = [
       <button class="submit" type="submit" data-submit>Send suggestion</button>
     </form>
 
-    <p class="nav">
-      {fromGame && <a href={backHref}>← Back to {gameTitle}</a>}
+    <p class="nav" data-nav>
       <a href="/activities/">Activities home</a>
     </p>
   </section>
 </ActivityLayout>
 
-<script>
+<script define:vars={{ allGames, workerUrl: FEEDBACK_WORKER_URL }}>
+  function resolveGameFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const slug = (params.get('game') || '').trim();
+    const titleParam = (params.get('title') || '').trim();
+    const hubParam = params.get('hub') || '';
+
+    if (!slug) return null;
+
+    const found = allGames.find((g) => g.slug === slug);
+    if (found) {
+      return {
+        slug: found.slug,
+        title: found.title,
+        hub: found.hub,
+        display: found.emoji ? `${found.title} ${found.emoji}` : found.title,
+      };
+    }
+
+    if (titleParam) {
+      const hub = hubParam === 'main' ? 'main' : 'getting-ready';
+      return { slug, title: titleParam, hub, display: titleParam };
+    }
+
+    return null;
+  }
+
+  function gameBackHref(slug, hub) {
+    return hub === 'main' ? `/activities/${slug}/` : `/activities/getting-ready/${slug}/`;
+  }
+
+  function renderGameField(root, game) {
+    const slot = root.querySelector('[data-game-slot]');
+    if (!slot) return;
+
+    if (game) {
+      slot.innerHTML = `
+        <input id="game-title-display" class="game-filled" type="text" readonly aria-readonly="true" data-game-title-display value="${escapeAttr(game.display)}" />
+        <input type="hidden" name="game" value="${escapeAttr(game.slug)}" data-game-input />
+        <input type="hidden" name="hub" value="${escapeAttr(game.hub)}" data-hub-input />
+        <input type="hidden" name="gameTitle" value="${escapeAttr(game.title)}" data-game-title-input />
+      `;
+      return;
+    }
+
+    const options = allGames
+      .map(
+        (g) =>
+          `<option value="${escapeAttr(g.slug)}" data-hub="${escapeAttr(g.hub)}" data-title="${escapeAttr(g.title)}">${escapeHtml(g.title)}</option>`,
+      )
+      .join('');
+
+    slot.innerHTML = `
+      <select id="game-title-display" name="game" required data-game-select>
+        <option value="">Choose an activity…</option>
+        ${options}
+      </select>
+    `;
+  }
+
+  function renderBackLink(root, game) {
+    const nav = root.querySelector('[data-nav]');
+    if (!nav) return;
+    if (game) {
+      nav.innerHTML = `
+        <a href="${escapeAttr(gameBackHref(game.slug, game.hub))}">← Back to ${escapeHtml(game.title)}</a>
+        <a href="/activities/">Activities home</a>
+      `;
+    } else {
+      nav.innerHTML = `<a href="/activities/">Activities home</a>`;
+    }
+  }
+
+  function escapeAttr(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  }
+
   function initFeedback() {
     const root = document.querySelector('[data-feedback-form]');
-    if (!root || root.dataset.init) return;
-    root.dataset.init = '1';
+    if (!root) return;
 
-    const workerUrl = root.getAttribute('data-worker-url');
+    const game = resolveGameFromUrl();
+    renderGameField(root, game);
+    renderBackLink(root, game);
+
+    if (root.dataset.bound) return;
+    root.dataset.bound = '1';
+
     const form = root.querySelector('[data-form]');
     const msg = root.querySelector('[data-msg]');
     const submitBtn = root.querySelector('[data-submit]');
-    const gameSelect = root.querySelector('[data-game-select]');
-    const gameInput = root.querySelector('[data-game-input]');
-    const hubInput = root.querySelector('[data-hub-input]');
-    const gameTitleInput = root.querySelector('[data-game-title-input]');
-    const gameTitleDisplay = root.querySelector('[data-game-title-display]');
 
     function showMsg(text, ok) {
       if (!msg || !submitBtn) return;
@@ -127,30 +177,36 @@ const allGames = [
     }
 
     function getPayload() {
-      let game = '';
+      const gameSelect = root.querySelector('[data-game-select]');
+      const gameInput = root.querySelector('[data-game-input]');
+      const hubInput = root.querySelector('[data-hub-input]');
+      const gameTitleInput = root.querySelector('[data-game-title-input]');
+      const gameTitleDisplay = root.querySelector('[data-game-title-display]');
+
+      let gameSlug = '';
       let hub = 'getting-ready';
       let gameTitle = '';
 
       if (gameSelect) {
         const opt = gameSelect.selectedOptions[0];
-        game = String(opt?.value || '').trim();
+        gameSlug = String(opt?.value || '').trim();
         hub = opt?.dataset.hub || 'getting-ready';
-        gameTitle = opt?.dataset.title || opt?.textContent?.trim() || game;
+        gameTitle = opt?.dataset.title || opt?.textContent?.trim() || gameSlug;
       } else {
-        game = gameInput?.value || '';
+        gameSlug = gameInput?.value || '';
         hub = hubInput?.value || 'getting-ready';
-        gameTitle = gameTitleInput?.value || gameTitleDisplay?.value || game;
+        gameTitle = gameTitleInput?.value || gameTitleDisplay?.value || gameSlug;
       }
 
       return {
-        game,
+        game: gameSlug,
         hub,
         email: String(new FormData(form).get('email') || '').trim(),
         suggestion: String(new FormData(form).get('suggestion') || '').trim(),
         website: String(new FormData(form).get('website') || '').trim(),
         gameTitle,
-        pageUrl: game
-          ? `${location.origin}${hub === 'main' ? `/activities/${game}/` : `/activities/getting-ready/${game}/`}`
+        pageUrl: gameSlug
+          ? `${location.origin}${hub === 'main' ? `/activities/${gameSlug}/` : `/activities/getting-ready/${gameSlug}/`}`
           : location.href,
       };
     }
@@ -230,6 +286,12 @@ const allGames = [
     font-weight: 700;
     margin-bottom: 0.25rem;
     color: #333;
+  }
+
+  .game-loading {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
   }
 
   .game-filled {
