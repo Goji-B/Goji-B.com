@@ -1,5 +1,6 @@
 ---
 import ActivityAudioControls from '../components/activities/ActivityAudioControls.astro';
+import CloudflareWebAnalytics from '../components/analytics/CloudflareWebAnalytics.astro';
 
 const { title = "Activity" } = Astro.props;
 ---
@@ -55,5 +56,6 @@ const { title = "Activity" } = Astro.props;
       <ActivityAudioControls />
       <slot />
     </main>
+    <CloudflareWebAnalytics />
   </body>
 </html>

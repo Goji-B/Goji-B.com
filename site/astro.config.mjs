@@ -2,12 +2,30 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
+const cfWebAnalyticsToken = process.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN?.trim() ?? '';
+
+/** @returns {import('@astrojs/starlight').StarlightUserConfig['head']} */
+function cloudflareBeaconHead() {
+	if (!cfWebAnalyticsToken) return [];
+	return [
+		{
+			tag: 'script',
+			attrs: {
+				defer: true,
+				src: 'https://static.cloudflareinsights.com/beacon.min.js',
+				'data-cf-beacon': JSON.stringify({ token: cfWebAnalyticsToken }),
+			},
+		},
+	];
+}
+
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://goji-b.com',
 	integrations: [
 		starlight({
 			title: 'Goji-B',
+			head: cloudflareBeaconHead(),
 			customCss: ['./src/styles/site-theme.css'],
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/Goji-B/Goji-B.com' }],
 			sidebar: [
@@ -25,6 +43,7 @@ export default defineConfig({
 						{ label: 'Simon Lights Mini Activity', link: '/activities/simon-lights-mini/' },
 						{ label: 'Find the Odd One Activity', link: '/activities/find-the-odd-one/' },
 						{ label: 'Trace the Path Activity', link: '/activities/trace-the-path/' },
+						{ label: 'Chess for Kids Activity', link: '/activities/chess-kids/' },
 					],
 				},
 			],

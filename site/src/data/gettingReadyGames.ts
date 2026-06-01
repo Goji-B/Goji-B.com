@@ -44,17 +44,6 @@ const coreGettingReadyGames: GettingReadyGame[] = [
     musicTheme: 'musicbox',
   },
   {
-    slug: 'chess-kids',
-    title: 'Chess for Kids',
-    emoji: '♟️',
-    tagline: 'Mini pawn battle on a small board.',
-    howTo: 'Tap your pawn, then tap a square one step forward or diagonally to capture. Reach the far row or capture all enemy pawns to win.',
-    skills: ['Logic', 'Planning', 'Patience'],
-    category: 'indoor',
-    mindPower: true,
-    musicTheme: 'acoustic',
-  },
-  {
     slug: 'twenty-questions',
     title: '20 Questions',
     emoji: '❓',

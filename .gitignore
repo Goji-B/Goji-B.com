@@ -1,3 +1,14 @@
 goji_b_plan.md
 local-activities-site-plan.md
 local-business-site-plan.md
+activities-management-system.md
+
+# Local env (analytics token, etc.)
+site/.env
+site/.env.local
+
+# Local clone of improvements repo + secrets (never commit)
+improvements-repo/
+*.pem
+**/.dev.vars
+!**/.dev.vars.example

@@ -1,0 +1,15 @@
+---
+/** Privacy-first page views + Web Vitals. Set PUBLIC_CF_WEB_ANALYTICS_TOKEN at build time. */
+const token = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN?.trim() ?? '';
+const beacon = token ? JSON.stringify({ token }) : '';
+---
+
+{
+  beacon ? (
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={beacon}
+    />
+  ) : null
+}

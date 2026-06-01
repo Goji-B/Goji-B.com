@@ -1,0 +1,12 @@
+---
+import ActivityLayout from '../../layouts/ActivityLayout.astro';
+import GrChessKids from '../../components/games/getting-ready/GrChessKids.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
+import BackToActivities from '../../components/activities/BackToActivities.astro';
+---
+
+<ActivityLayout title="Chess for Kids Activity">
+  <GrChessKids />
+  <ActivityFeedbackBlob slug="chess-kids" hub="main" title="Chess for Kids" />
+  <BackToActivities />
+</ActivityLayout>

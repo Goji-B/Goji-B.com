@@ -13,6 +13,7 @@ export const mainActivities: MainActivity[] = [
   { slug: 'simon-lights-mini', title: 'Simon Lights Mini' },
   { slug: 'find-the-odd-one', title: 'Find the Odd One' },
   { slug: 'trace-the-path', title: 'Trace the Path' },
+  { slug: 'chess-kids', title: 'Chess for Kids' },
 ];
 
 export function getMainActivity(slug: string): MainActivity | undefined {

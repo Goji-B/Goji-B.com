@@ -6,7 +6,6 @@ import { gettingReadyGames, getGettingReadyGame } from '../../../data/gettingRea
 import { usesPlayKit } from '../../../data/gettingReadyPlay';
 import GrPlayKit from '../../../components/games/getting-ready/GrPlayKit.astro';
 import GrMemoryCards from '../../../components/games/getting-ready/GrMemoryCards.astro';
-import GrChessKids from '../../../components/games/getting-ready/GrChessKids.astro';
 import GrTwentyQuestions from '../../../components/games/getting-ready/GrTwentyQuestions.astro';
 import GrStoryBuilding from '../../../components/games/getting-ready/GrStoryBuilding.astro';
 import GrTangramShapes from '../../../components/games/getting-ready/GrTangramShapes.astro';
@@ -28,7 +27,6 @@ if (!game) {
 
 const customGames: Record<string, typeof GrMemoryCards> = {
   'memory-card-matching': GrMemoryCards,
-  'chess-kids': GrChessKids,
   'twenty-questions': GrTwentyQuestions,
   'story-building': GrStoryBuilding,
   'tangram-shapes': GrTangramShapes,
