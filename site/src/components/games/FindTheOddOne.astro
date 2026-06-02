@@ -1,5 +1,6 @@
 <section class="game" data-odd-root data-music-theme="quirky">
   <h2>Find the Odd One</h2>
+  <p class="score-line" data-score>Score: 0</p>
   <p data-msg aria-live="polite">Tap the one that is different.</p>
   <div class="grid" data-grid></div>
 </section>
@@ -13,6 +14,7 @@
     root.dataset.init = '1';
     bindActivityUnlock(root, 'quirky');
     const grid = root.querySelector('[data-grid]');
+    const scoreEl = root.querySelector('[data-score]');
     const msg = root.querySelector('[data-msg]');
     const sets = [
       ['🐶', '🐱'],
@@ -26,6 +28,11 @@
 
     let locked = false;
     let advanceTimer = null;
+    let score = 0;
+
+    function updateScore() {
+      scoreEl.textContent = `Score: ${score}`;
+    }
 
     function renderRound() {
       if (advanceTimer) {
@@ -52,6 +59,8 @@
           if (locked) return;
 
           if (i === oddIndex) {
+            score += 1;
+            updateScore();
             locked = true;
             grid.querySelectorAll('.odd-cell').forEach((cell) => {
               cell.disabled = true;
@@ -76,6 +85,7 @@
       }
     }
 
+    updateScore();
     renderRound();
   }
 
@@ -96,6 +106,13 @@
 
   .game.round-win {
     background: #e8ffe8;
+  }
+
+  .score-line {
+    margin: 0.2rem 0 0.45rem;
+    font-size: clamp(1.02rem, 4.1vw, 1.26rem);
+    font-weight: 800;
+    color: #5d4e1a;
   }
 
   .grid {

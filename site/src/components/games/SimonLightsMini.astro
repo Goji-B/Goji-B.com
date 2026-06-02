@@ -1,5 +1,6 @@
 <section class="game" data-simon-root data-music-theme="electronic">
   <h2>Simon Lights Mini</h2>
+  <p class="score-line">Score: <strong data-score>0</strong></p>
   <ol class="howto">
     <li>Press <strong>Start</strong>.</li>
     <li>Watch the flashing colors.</li>
@@ -24,11 +25,13 @@
     root.dataset.init = '1';
     bindActivityUnlock(root, 'electronic');
     const msg = root.querySelector('[data-msg]');
+    const scoreEl = root.querySelector('[data-score]');
     const pads = [...root.querySelectorAll('.pad')];
     const start = root.querySelector('[data-start]');
     let seq = [];
     let user = [];
     let playing = false;
+    let score = 0;
     const padSfx: SfxType[] = ['pad0', 'pad1', 'pad2', 'pad3'];
 
     function flash(i) {
@@ -62,7 +65,11 @@
         audio.speak('Oops!');
         audio.playSfx('fail');
         seq = [];
+        score = 0;
+        scoreEl.textContent = '0';
       } else if (user.length === seq.length) {
+        score += 1;
+        scoreEl.textContent = String(score);
         msg.textContent = 'Great! Next round...';
         audio.speak('Great!');
         audio.playSfx('success');
@@ -90,6 +97,11 @@
     max-width: 420px;
     text-align: left;
     font-size: clamp(.95rem, 3.9vw, 1.1rem);
+  }
+  .score-line {
+    margin: 0 0 0.45rem;
+    font-size: clamp(1.02rem, 4.2vw, 1.24rem);
+    font-weight: 800;
   }
   .grid {
     display:grid;

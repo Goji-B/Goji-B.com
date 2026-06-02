@@ -1,5 +1,6 @@
 <section class="game" data-memory-root data-music-theme="musicbox">
   <h2>Animal Memory Cards</h2>
+  <p class="score-line" data-score>Score: 0</p>
   <p data-msg>Tap two cards. If they match, they stay open.</p>
   <div class="grid" data-grid></div>
   <p class="reload-wrap" data-reload-wrap hidden>
@@ -17,9 +18,15 @@
     bindActivityUnlock(root, 'musicbox');
     const grid = root.querySelector('[data-grid]');
     const msg = root.querySelector('[data-msg]');
+    const scoreEl = root.querySelector('[data-score]');
     const reloadWrap = root.querySelector('[data-reload-wrap]');
     const reloadBtn = root.querySelector('[data-reload]');
     const pool = ['🐱', '🐶', '🦊', '🦉', '🐼', '🐸', '🐵', '🐰', '🦁', '🐮', '🐧', '🐯'];
+    let score = 0;
+
+    function updateScore() {
+      scoreEl.textContent = `Score: ${score}`;
+    }
 
     function shuffle(arr) {
       const copy = [...arr];
@@ -56,6 +63,8 @@
             first.classList.add('ok');
             b.classList.add('ok');
             matched += 2;
+            score += 1;
+            updateScore();
             first = null;
             audio.playSfx('match');
             audio.speak('Match!');
@@ -81,6 +90,7 @@
     }
 
     reloadBtn.addEventListener('click', renderNewRound);
+    updateScore();
     renderNewRound();
   }
   initMemory();
@@ -89,6 +99,13 @@
 
 <style>
   .game { background:#fff9ef; padding:1rem; border-radius:14px; border:2px solid #805c2f; color:#2b1d0e; }
+  .score-line {
+    margin: 0 0 0.45rem;
+    text-align: center;
+    font-size: clamp(1.02rem, 4.1vw, 1.24rem);
+    font-weight: 800;
+    color: #68431f;
+  }
   .grid { display:grid; grid-template-columns:repeat(4,78px); justify-content:center; gap:.6rem; }
   :global(.memory-card) {
     all: unset;

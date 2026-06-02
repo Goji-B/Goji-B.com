@@ -1,5 +1,6 @@
 <section class="game" data-trace-root data-music-theme="explore">
   <h2>Trace the Path</h2>
+  <p class="score-line" data-score>Score: 0</p>
   <p data-msg aria-live="polite">Pick a speed. Press Start. Watch, then trace.</p>
   <div class="speed-row" role="group" aria-label="Path speed">
     <button type="button" class="speed-btn is-active" data-speed="slow">Slow</button>
@@ -33,6 +34,7 @@
     bindActivityUnlock(root, 'explore');
 
     const msg = root.querySelector('[data-msg]');
+    const scoreEl = root.querySelector('[data-score]');
     const pathWrap = root.querySelector('[data-path]');
     const startBtn = root.querySelector('[data-start]');
     const reloadWrap = root.querySelector('[data-reload-wrap]');
@@ -46,6 +48,11 @@
     let dragging = false;
     let roundActive = false;
     let currentSpeed = 'slow';
+    let score = 0;
+
+    function updateScore() {
+      scoreEl.textContent = `Score: ${score}`;
+    }
 
     function getPreset() {
       return SPEED_PRESETS[currentSpeed] ?? SPEED_PRESETS.slow;
@@ -163,6 +170,8 @@
     }
 
     function completeRound() {
+      score += 1;
+      updateScore();
       pathWrap.classList.add('success-all');
       msg.textContent = 'Yay!';
       audio.speak('Yay!');
@@ -213,6 +222,7 @@
     startBtn.addEventListener('click', startRound);
     reloadBtn.addEventListener('click', startRound);
     buildBoard();
+    updateScore();
   }
 
   initTrace();
@@ -235,6 +245,13 @@
     justify-content: center;
     gap: 0.45rem;
     margin: 0.5rem 0 0.65rem;
+  }
+
+  .score-line {
+    margin: 0.2rem 0 0.45rem;
+    font-size: clamp(1.02rem, 4.1vw, 1.24rem);
+    font-weight: 800;
+    color: #224f87;
   }
 
   .speed-btn {
