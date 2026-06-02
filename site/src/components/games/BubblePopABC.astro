@@ -12,7 +12,7 @@
   <div class="row" data-row></div>
   <p class="feedback" data-feedback aria-live="polite"></p>
   <div class="finale" data-finale hidden>
-    <p class="finale-stars" aria-hidden="true">★ ★ ★</p>
+    <p class="finale-stars" data-finale-stars aria-label="3 stars">★ ★ ★</p>
     <p class="finale-z">Z!</p>
     <p class="finale-time">
       <span class="timer-icon" aria-hidden="true">⏱</span>
@@ -36,6 +36,7 @@
     const row = root.querySelector('[data-row]');
     const feedback = root.querySelector('[data-feedback]');
     const finale = root.querySelector('[data-finale]');
+    const finaleStars = root.querySelector('[data-finale-stars]');
     const finaleTime = root.querySelector('[data-finale-time]');
     const stageFrom = root.querySelector('[data-stage-from]');
     const stageTo = root.querySelector('[data-stage-to]');
@@ -89,6 +90,19 @@
         timerInterval = null;
       }
       updateTimerDisplay();
+    }
+
+    function starsFromElapsedMs(ms) {
+      const sec = ms / 1000;
+      if (sec < 15) return 5;
+      if (sec < 20) return 4;
+      if (sec < 25) return 3;
+      if (sec <= 30) return 2;
+      return 1;
+    }
+
+    function renderStars(count) {
+      return Array.from({ length: count }, () => '★').join(' ');
     }
 
     function clearHint() {
@@ -190,8 +204,11 @@
                 advancing = true;
                 stopTimer();
                 const ms = elapsedMs();
+                const stars = starsFromElapsedMs(ms);
                 flashWin();
                 root.classList.add('all-done');
+                finaleStars.textContent = renderStars(stars);
+                finaleStars.setAttribute('aria-label', `${stars} star${stars === 1 ? '' : 's'}`);
                 finaleTime.textContent = formatElapsed(ms);
                 feedback.textContent = '';
                 finale.hidden = false;
