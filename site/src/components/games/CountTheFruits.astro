@@ -1,6 +1,9 @@
 <section class="game" data-fruit-root data-music-theme="acoustic">
   <h2>Count the Fruits</h2>
   <p class="score-line" data-score>Score: 0</p>
+  <p class="timer-line" data-timer-wrap aria-label="Time left">
+    Time left: <strong data-timer>2:00</strong>
+  </p>
   <p data-question>How many fruits do you see?</p>
   <div class="fruits" data-fruits></div>
   <div class="answers" data-answers></div>
@@ -20,6 +23,8 @@
     const answers = root.querySelector('[data-answers]');
     const msg = root.querySelector('[data-msg]');
     const scoreEl = root.querySelector('[data-score]');
+    const timerWrap = root.querySelector('[data-timer-wrap]');
+    const timerEl = root.querySelector('[data-timer]');
     const fruitPool = [
       { emoji: '🍎', name: 'apples' },
       { emoji: '🍌', name: 'bananas' },
@@ -29,12 +34,59 @@
       { emoji: '🍐', name: 'pears' },
     ];
     let score = 0;
+    const ROUND_LIMIT_MS = 2 * 60 * 1000;
+    let startedAt = performance.now();
+    let timerInterval = null;
+    let roundTimer = null;
+    let gameOver = false;
 
     function updateScore() {
       scoreEl.textContent = `Score: ${score}`;
     }
 
+    function formatLeft(ms) {
+      const totalSec = Math.max(0, Math.ceil(ms / 1000));
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function timeLeftMs() {
+      return Math.max(0, ROUND_LIMIT_MS - (performance.now() - startedAt));
+    }
+
+    function updateTimer() {
+      timerEl.textContent = formatLeft(timeLeftMs());
+    }
+
+    function endGame() {
+      gameOver = true;
+      if (roundTimer) {
+        clearTimeout(roundTimer);
+        roundTimer = null;
+      }
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      answers.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+      updateTimer();
+      msg.textContent = `Time is up! Final score: ${score}.`;
+      audio.speak('Time is up');
+      audio.playSfx('success');
+    }
+
+    function startTimerLoop() {
+      timerWrap.hidden = false;
+      updateTimer();
+      timerInterval = window.setInterval(() => {
+        updateTimer();
+        if (timeLeftMs() <= 0) endGame();
+      }, 200);
+    }
+
     function nextRound() {
+      if (gameOver) return;
       const picked = fruitPool[Math.floor(Math.random() * fruitPool.length)];
       const count = Math.floor(Math.random() * 6) + 3; // 3..8
       question.textContent = `How many ${picked.name}?`;
@@ -53,13 +105,14 @@
         b.type = 'button';
         b.textContent = String(n);
         b.addEventListener('click', () => {
+          if (gameOver) return;
           if (n === count) {
             score += 1;
             updateScore();
             msg.textContent = 'Yes!';
             audio.speak('Yes!');
             audio.playSfx('ding');
-            setTimeout(nextRound, 700);
+            roundTimer = window.setTimeout(nextRound, 700);
           } else {
             msg.textContent = 'Try again!';
             audio.speak('Try again!');
@@ -71,6 +124,7 @@
     }
 
     updateScore();
+    startTimerLoop();
     nextRound();
   }
   initFruit();
@@ -95,6 +149,12 @@
     margin: 0.25rem 0 0.5rem;
     font-size: clamp(1.05rem, 4.2vw, 1.3rem);
     font-weight: 800;
+    color: #7a2020;
+  }
+  .timer-line {
+    margin: 0 0 0.45rem;
+    font-size: clamp(1.02rem, 4vw, 1.2rem);
+    font-weight: 700;
     color: #7a2020;
   }
   .answers {
