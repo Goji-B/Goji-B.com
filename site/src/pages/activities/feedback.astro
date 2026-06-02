@@ -183,6 +183,23 @@ const allGames = [
       msg.classList.toggle('err', !ok);
     }
 
+    function resetCaptcha() {
+      if (window.turnstile) window.turnstile.reset();
+    }
+
+    function friendlyError(status, serverError) {
+      const e = String(serverError || '').toLowerCase();
+      if (e.includes('captcha')) return 'Captcha expired or failed. Please complete it again.';
+      if (status === 429 || e.includes('too many') || e.includes('daily limit')) {
+        return 'Too many suggestions right now. Please try again a little later.';
+      }
+      if (status === 409 || e.includes('similar suggestion')) {
+        return 'This looks like a duplicate suggestion from recently. Please update your text and try again.';
+      }
+      if (status >= 500) return 'Server is busy right now. Please try again shortly.';
+      return serverError || 'Could not send. Please try again.';
+    }
+
     function getPayload() {
       const gameSelect = root.querySelector('[data-game-select]');
       const gameInput = root.querySelector('[data-game-input]');
@@ -257,13 +274,15 @@ const allGames = [
           if (email) email.value = '';
           if (suggestion) suggestion.value = '';
           if (website) website.value = '';
-          if (window.turnstile) window.turnstile.reset();
+          resetCaptcha();
           showMsg('Thanks! We read every suggestion.', true);
         } else {
-          showMsg(data.error || 'Could not send. Please try again.', false);
+          resetCaptcha();
+          showMsg(friendlyError(res.status, data.error), false);
         }
       } catch {
-        showMsg('Network error. Please try again.', false);
+        resetCaptcha();
+        showMsg('Network or timeout error. Please retry and complete captcha again.', false);
       } finally {
         submitBtn.disabled = false;
       }
