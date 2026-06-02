@@ -2,6 +2,10 @@
 
 Main source repository for the Goji-B website.
 
+## Agent onboarding
+
+- Start with `READ_FIRST.md` for the current workflow, planning docs order, and guardrails.
+
 ## Production source
 
 - Website source lives in `site/` (Astro + Starlight).

@@ -1,6 +1,6 @@
 # Feedback on Activities — design notes
 
-**Status:** **Phases A–C live** (2026-05-27). Ongoing: Phase D (review on GitHub). Phase E deferred.  
+**Status:** **Phases A–C live** (2026-05-27), plus **anti-abuse hardening live** (2026-06-02). Ongoing: Phase D (review on GitHub). Phase E mostly deferred.  
 **Scope:** All activity game pages under **`/activities/`** (including current and future promoted games).  
 **Public site:** [Goji-B.com](https://github.com/Goji-B/Goji-B.com) · Feedback form: https://goji-b.com/activities/feedback/  
 **Improvements inbox:** https://github.com/Goji-B/improvements (private)  
@@ -163,6 +163,9 @@ Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you revie
 | **B8** | POST test → Issue appears in `improvements` with correct game, email, text. | [x] |
 | **B9** | Test **reject** cases (missing email, empty suggestion, honeypot, wrong method). | [ ] optional |
 | **B10** | Worker URL recorded in `site/src/data/activityFeedbackConfig.ts`. | [x] |
+| **B11** | Add Turnstile verification in Worker (`TURNSTILE_SECRET_KEY`, hostname check). | [x] |
+| **B12** | Add KV-backed abuse controls (`FEEDBACK_KV`): IP/email rate limits + 24h duplicate detection. | [x] |
+| **B13** | Add lightweight spam-text heuristics + clearer rejection reasons (`429`/`409`/captcha). | [x] |
 
 ### Phase C — Public site (`Goji-B.com`) — complete
 
@@ -176,6 +179,8 @@ Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you revie
 | **C6** | Form POST to Worker URL via `activityFeedbackConfig.ts`. | [x] |
 | **C7** | Live test: game → Suggest an improvement → submit → Issue in `improvements`. | [x] |
 | **C8** | Build, push `main` (`05633c8`); live on goji-b.com. | [x] |
+| **C9** | Add Cloudflare Turnstile widget to feedback form + token payload; wire `PUBLIC_CF_TURNSTILE_SITE_KEY` in Pages build. | [x] |
+| **C10** | Improve user-facing failure messages and retry flow (reset captcha on failed submit). | [x] |
 
 ### Phase D — Editor workflow (ongoing, no extra infra)
 
@@ -185,7 +190,7 @@ Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you revie
 | **D2** | When implementing a fix in `Goji-B.com`, reference or close the feedback Issue in the PR description. | [ ] |
 | **D3** | Move Issue status via labels (e.g. `status/new` → `status/done` / `status/wont-fix`) — define full set in §8. | [ ] |
 
-### Phase E — Later (not blocking launch)
+### Phase E — Later (not blocking launch; excluding completed E5)
 
 | # | Job | Done |
 |---|-----|------|
@@ -193,7 +198,7 @@ Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you revie
 | **E2** | Add other GitHub users to private `improvements` repo. | [ ] |
 | **E3** | Optional: custom domain `feedback.goji-b.com` → Worker (DNS in Cloudflare). | [ ] |
 | **E4** | Optional: auto “we received it” email via Resend/SendGrid from Worker (not GitHub). | [ ] |
-| **E5** | Optional: Cloudflare Turnstile (CAPTCHA) if spam appears. | [ ] |
+| **E5** | Cloudflare Turnstile (CAPTCHA) anti-bot protection. | [x] implemented 2026-06-02 |
 | **E6** | Revisit **Pi AMS** (`activities-management-system.md`) only if GitHub Issues workflow becomes too limited. | [ ] |
 
 **Rough time (first time):** Phase A ~30 min · Phase B ~1–2 h · Phase C ~1–2 h · Phase D ongoing.
@@ -246,13 +251,29 @@ Phases **A–C** completed 2026-05-27. Phase **D** is ongoing whenever you revie
 
 ---
 
-## 10. Security & spam (lightweight)
+## 9.1 Deferred next-six list (resume checklist)
 
-- Honeypot field (leave empty).  
-- Rate limit via Worker.  
+Use this as the short restart list when feedback work resumes:
+
+1. **E1 Privacy page + form link** — publish data-use/retention wording.
+2. **E2 Repo access** — add additional maintainers to private `improvements`.
+3. **E3 Optional feedback subdomain** — `feedback.goji-b.com` routing.
+4. **E4 Return email automation** — provider integration + templates (`thank_you`, `need_info`, `implemented`).
+5. **D1–D3 Editor workflow discipline** — labels, triage routine, and PR/issue linkage.
+6. **E6 Pi AMS decision gate** — only if GitHub Issues flow becomes insufficient.
+
+---
+
+## 10. Security & spam (live baseline + optional extras)
+
+- Honeypot field (live).  
+- Cloudflare Turnstile (live on feedback page + Worker verification).  
+- KV-backed limits (live): IP 5/10m, IP 20/day, email 3/hour.  
+- 24h duplicate detection by normalized hash (`game + email + suggestion`) (live).  
+- Lightweight spam-text heuristics (live) to reject obvious junk.  
 - No file uploads in v1.  
 - Do not publish personal email in plain HTML after submit — use Worker POST only.
 
 ---
 
-*Created 2026-05-16. Agreed 2026-05-27 (§5). Phases A–C completed 2026-05-27. Next: Phase D (ongoing), Phase E when needed.*
+*Created 2026-05-16. Agreed 2026-05-27 (§5). Phases A–C completed 2026-05-27. Anti-abuse hardening (Turnstile + KV limits/dedupe + UX errors) completed 2026-06-02. Next: Phase D (ongoing), remaining Phase E when needed.*
