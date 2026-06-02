@@ -3,6 +3,7 @@ import ActivityLayout from '../../layouts/ActivityLayout.astro';
 import { FEEDBACK_WORKER_URL } from '../../data/activityFeedbackConfig';
 import { gettingReadyGames } from '../../data/gettingReadyGames';
 import { mainActivities } from '../../data/mainActivities';
+const turnstileSiteKey = import.meta.env.PUBLIC_CF_TURNSTILE_SITE_KEY || '';
 
 /** Embedded for client-side lookup — static build has no request query string. */
 const allGames = [
@@ -58,6 +59,10 @@ const allGames = [
         <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
       </div>
 
+      <div class="field captcha-field">
+        <div class="cf-turnstile" data-turnstile data-sitekey={turnstileSiteKey}></div>
+      </div>
+
       <p class="msg" data-msg hidden></p>
 
       <button class="submit" type="submit" data-submit>Send suggestion</button>
@@ -69,7 +74,9 @@ const allGames = [
   </section>
 </ActivityLayout>
 
-<script define:vars={{ allGames, workerUrl: FEEDBACK_WORKER_URL }}>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script define:vars={{ allGames, workerUrl: FEEDBACK_WORKER_URL, turnstileSiteKey }}>
   function resolveGameFromUrl() {
     const params = new URLSearchParams(location.search);
     const slug = (params.get('game') || '').trim();
@@ -204,6 +211,7 @@ const allGames = [
         email: String(new FormData(form).get('email') || '').trim(),
         suggestion: String(new FormData(form).get('suggestion') || '').trim(),
         website: String(new FormData(form).get('website') || '').trim(),
+        turnstileToken: String(new FormData(form).get('cf-turnstile-response') || '').trim(),
         gameTitle,
         pageUrl: gameSlug
           ? `${location.origin}${hub === 'main' ? `/activities/${gameSlug}/` : `/activities/getting-ready/${gameSlug}/`}`
@@ -217,10 +225,18 @@ const allGames = [
         showMsg('Feedback is not configured yet. Please try again later.', false);
         return;
       }
+      if (!turnstileSiteKey) {
+        showMsg('Feedback captcha is not configured yet. Please try again later.', false);
+        return;
+      }
 
       const payload = getPayload();
       if (!payload.game) {
         showMsg('Please choose which activity this is for.', false);
+        return;
+      }
+      if (!payload.turnstileToken) {
+        showMsg('Please complete the captcha check.', false);
         return;
       }
 
@@ -241,6 +257,7 @@ const allGames = [
           if (email) email.value = '';
           if (suggestion) suggestion.value = '';
           if (website) website.value = '';
+          if (window.turnstile) window.turnstile.reset();
           showMsg('Thanks! We read every suggestion.', true);
         } else {
           showMsg(data.error || 'Could not send. Please try again.', false);
@@ -318,6 +335,11 @@ const allGames = [
     font-size: 0.82rem;
     color: #555;
     margin: 0.25rem 0 0;
+  }
+
+  .captcha-field {
+    display: flex;
+    justify-content: center;
   }
 
   .hp {
