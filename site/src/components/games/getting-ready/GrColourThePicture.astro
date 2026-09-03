@@ -1,5 +1,20 @@
 ---
 import './gr-game.css';
+
+const PALETTE = [
+  '#ff6b6b',
+  '#ffa94d',
+  '#ffd43b',
+  '#69db7c',
+  '#40c057',
+  '#4dabf7',
+  '#228be6',
+  '#9775fa',
+  '#f783ac',
+  '#fab005',
+  '#868e96',
+  '#ffffff',
+];
 ---
 
 <section class="gr-play colour-game" data-colour-picture data-music-theme="playful">
@@ -12,7 +27,19 @@ import './gr-game.css';
     <button type="button" class="tool-btn" data-tool="eraser" aria-pressed="false">🧽 Eraser</button>
   </div>
 
-  <div class="palette" data-palette role="group" aria-label="Colours"></div>
+  <div class="palette" data-palette role="group" aria-label="Colours">
+    {
+      PALETTE.map((hex, i) => (
+        <button
+          type="button"
+          class:list={['swatch', { 'swatch--white': hex === '#ffffff', 'is-active': i === 0 }]}
+          data-color={hex}
+          style={`background-color: ${hex}`}
+          aria-label={hex === '#ffffff' ? 'White' : `Colour ${i + 1}`}
+        />
+      ))
+    }
+  </div>
 
   <div class="art-wrap" data-art-wrap>
     <svg class="art-svg" data-svg viewBox="0 0 200 200" aria-hidden="true"></svg>
@@ -28,21 +55,6 @@ import './gr-game.css';
 
 <script>
   import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
-
-  const PALETTE = [
-    '#ff6b6b',
-    '#ffa94d',
-    '#ffd43b',
-    '#69db7c',
-    '#40c057',
-    '#4dabf7',
-    '#228be6',
-    '#9775fa',
-    '#f783ac',
-    '#fab005',
-    '#868e96',
-    '#ffffff',
-  ];
 
   const PICTURES = [
     {
@@ -158,7 +170,7 @@ import './gr-game.css';
     bindActivityUnlock(root, 'playful');
 
     const label = root.querySelector('[data-label]');
-    const paletteEl = root.querySelector('[data-palette]');
+    const swatchBtns = [...root.querySelectorAll('[data-palette] .swatch[data-color]')];
     const svg = root.querySelector('[data-svg]');
     const canvas = root.querySelector('[data-canvas]');
     const artWrap = root.querySelector('[data-art-wrap]');
@@ -169,7 +181,7 @@ import './gr-game.css';
 
     const ctx = canvas.getContext('2d');
     let tool = 'fill';
-    let color = PALETTE[0];
+    let color = swatchBtns[0]?.dataset.color ?? '#ff6b6b';
     let pictureIndex = -1;
     let drawing = false;
     let undoStack = [];
@@ -308,25 +320,12 @@ import './gr-game.css';
       ctx.globalCompositeOperation = 'source-over';
     }
 
-    PALETTE.forEach((hex, i) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'swatch';
-      btn.style.background = hex;
-      btn.style.width = '2.75rem';
-      btn.style.height = '2.75rem';
-      btn.style.minWidth = '2.75rem';
-      btn.style.minHeight = '2.75rem';
-      btn.setAttribute('aria-label', hex === '#ffffff' ? 'White' : `Colour ${i + 1}`);
-      btn.dataset.color = hex;
-      if (hex === '#ffffff') btn.classList.add('swatch--white');
-      if (i === 0) btn.classList.add('is-active');
+    swatchBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
-        color = hex;
-        paletteEl.querySelectorAll('.swatch').forEach((s) => s.classList.remove('is-active'));
+        color = btn.dataset.color ?? color;
+        swatchBtns.forEach((s) => s.classList.remove('is-active'));
         btn.classList.add('is-active');
       });
-      paletteEl.appendChild(btn);
     });
 
     toolBtns.forEach((btn) => {
@@ -403,33 +402,39 @@ import './gr-game.css';
   .palette {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.45rem;
+    gap: 8px;
     justify-content: center;
+    align-items: center;
+    min-height: 44px;
     margin-bottom: 0.55rem;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
-  .palette :global(.swatch) {
-    display: block;
+  .swatch {
+    display: inline-block;
     box-sizing: border-box;
-    width: 2.75rem;
-    height: 2.75rem;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0;
     margin: 0;
-    flex: 0 0 2.75rem;
+    flex: 0 0 44px;
     border-radius: 6px;
-    border: 2px solid #dee2e6;
+    border: 2px solid #adb5bd;
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    vertical-align: top;
   }
 
-  .palette :global(.swatch--white) {
+  .swatch--white {
     background: #fff !important;
   }
 
-  .palette :global(.swatch.is-active) {
+  .swatch.is-active {
     outline: 3px solid #5f3dc4;
     outline-offset: 2px;
   }
