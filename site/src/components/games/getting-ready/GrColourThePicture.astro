@@ -1,0 +1,456 @@
+---
+import './gr-game.css';
+---
+
+<section class="gr-play colour-game" data-colour-picture data-music-theme="playful">
+  <h2>Colour the Picture</h2>
+  <p class="gr-msg picture-label" data-label aria-live="polite"></p>
+
+  <div class="tool-row" role="toolbar" aria-label="Colouring tools">
+    <button type="button" class="tool-btn is-active" data-tool="fill" aria-pressed="true">🪣 Fill</button>
+    <button type="button" class="tool-btn" data-tool="brush" aria-pressed="false">🖌 Brush</button>
+    <button type="button" class="tool-btn" data-tool="eraser" aria-pressed="false">🧽 Eraser</button>
+  </div>
+
+  <div class="palette" data-palette role="group" aria-label="Colours"></div>
+
+  <div class="art-wrap" data-art-wrap>
+    <svg class="art-svg" data-svg viewBox="0 0 200 200" aria-hidden="true"></svg>
+    <canvas class="art-canvas" data-canvas width="400" height="400"></canvas>
+  </div>
+
+  <div class="gr-btn-row">
+    <button type="button" class="gr-btn gr-btn--ghost" data-undo disabled>Undo</button>
+    <button type="button" class="gr-btn gr-btn--warn" data-clear>Clear</button>
+    <button type="button" class="gr-btn" data-new>New picture</button>
+  </div>
+</section>
+
+<script>
+  import { audio, bindActivityUnlock } from '../../../lib/activityAudio';
+
+  const PALETTE = [
+    '#ff6b6b',
+    '#ffa94d',
+    '#ffd43b',
+    '#69db7c',
+    '#40c057',
+    '#4dabf7',
+    '#228be6',
+    '#9775fa',
+    '#f783ac',
+    '#fab005',
+    '#868e96',
+    '#ffffff',
+  ];
+
+  const PICTURES = [
+    {
+      name: 'Cat',
+      emoji: '🐱',
+      svg: `
+        <path data-region="body" d="M55 130 Q45 90 100 85 Q155 90 145 130 L135 175 L65 175 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="head" d="M70 88 Q100 55 130 88 L125 115 L75 115 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="ear-l" d="M72 78 L60 45 L88 72 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="ear-r" d="M128 78 L140 45 L112 72 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="tail" d="M145 140 Q175 120 180 90 Q170 130 150 155 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle cx="88" cy="98" r="4" fill="#333"/>
+        <circle cx="112" cy="98" r="4" fill="#333"/>
+        <path d="M95 108 Q100 112 105 108" fill="none" stroke="#333" stroke-width="2"/>
+      `,
+    },
+    {
+      name: 'Dog',
+      emoji: '🐶',
+      svg: `
+        <path data-region="body" d="M60 125 Q50 95 100 90 Q150 95 140 125 L132 170 L68 170 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="head" cx="100" cy="88" rx="38" ry="32" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="ear-l" d="M68 72 L55 48 L82 68 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="ear-r" d="M132 72 L145 48 L118 68 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="snout" cx="100" cy="98" rx="16" ry="12" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle cx="88" cy="82" r="4" fill="#333"/>
+        <circle cx="112" cy="82" r="4" fill="#333"/>
+        <ellipse cx="100" cy="100" rx="6" ry="4" fill="#333"/>
+      `,
+    },
+    {
+      name: 'Butterfly',
+      emoji: '🦋',
+      svg: `
+        <ellipse data-region="wing-tl" cx="65" cy="75" rx="42" ry="35" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="wing-tr" cx="135" cy="75" rx="42" ry="35" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="wing-bl" cx="70" cy="130" rx="32" ry="28" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="wing-br" cx="130" cy="130" rx="32" ry="28" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse data-region="body" cx="100" cy="105" rx="8" ry="45" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path d="M92 62 Q100 50 108 62" fill="none" stroke="#333" stroke-width="2.5"/>
+      `,
+    },
+    {
+      name: 'House',
+      emoji: '🏠',
+      svg: `
+        <path data-region="wall" d="M45 95 L45 175 L155 175 L155 95 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="roof" d="M35 98 L100 35 L165 98 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <rect data-region="door" x="82" y="125" width="36" height="50" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <rect data-region="window" x="55" y="110" width="28" height="28" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <rect data-region="window-r" x="117" y="110" width="28" height="28" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle cx="110" cy="150" r="3" fill="#333"/>
+      `,
+    },
+    {
+      name: 'Cup',
+      emoji: '☕',
+      svg: `
+        <path data-region="cup" d="M55 70 L65 165 L135 165 L145 70 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="liquid" d="M58 95 L62 155 L138 155 L142 95 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="handle" d="M145 85 Q175 85 175 115 Q175 145 145 145 Q155 130 155 115 Q155 100 145 95 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <ellipse cx="100" cy="70" rx="45" ry="10" fill="#fff" stroke="#333" stroke-width="2.5"/>
+      `,
+    },
+    {
+      name: 'Tree',
+      emoji: '🌳',
+      svg: `
+        <rect data-region="trunk" x="88" y="120" width="24" height="55" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle data-region="leaves" cx="100" cy="85" r="52" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle data-region="apple-a" cx="75" cy="75" r="8" fill="#fff" stroke="#333" stroke-width="2"/>
+        <circle data-region="apple-b" cx="120" cy="90" r="8" fill="#fff" stroke="#333" stroke-width="2"/>
+      `,
+    },
+    {
+      name: 'Car',
+      emoji: '🚗',
+      svg: `
+        <path data-region="body" d="M35 120 L55 85 L145 85 L165 120 L165 145 L35 145 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="roof" d="M60 85 L80 55 L120 55 L140 85 Z" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <rect data-region="window-l" x="68" y="62" width="28" height="22" fill="#fff" stroke="#333" stroke-width="2"/>
+        <rect data-region="window-r" x="104" y="62" width="28" height="22" fill="#fff" stroke="#333" stroke-width="2"/>
+        <circle data-region="wheel-l" cx="65" cy="145" r="16" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle data-region="wheel-r" cx="135" cy="145" r="16" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <circle cx="65" cy="145" r="6" fill="#333"/>
+        <circle cx="135" cy="145" r="6" fill="#333"/>
+      `,
+    },
+    {
+      name: 'Sun',
+      emoji: '☀️',
+      svg: `
+        <circle data-region="center" cx="100" cy="100" r="35" fill="#fff" stroke="#333" stroke-width="2.5"/>
+        <path data-region="ray-n" d="M95 25 L105 25 L102 55 L98 55 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-s" d="M95 145 L105 145 L102 175 L98 175 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-e" d="M145 95 L175 95 L175 105 L145 102 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-w" d="M25 95 L55 95 L55 105 L25 102 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-ne" d="M130 45 L155 30 L148 52 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-nw" d="M70 45 L45 30 L52 52 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-se" d="M130 155 L155 170 L148 148 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <path data-region="ray-sw" d="M70 155 L45 170 L52 148 Z" fill="#fff" stroke="#333" stroke-width="2"/>
+        <circle cx="88" cy="95" r="4" fill="#333"/>
+        <circle cx="112" cy="95" r="4" fill="#333"/>
+        <path d="M90 112 Q100 118 110 112" fill="none" stroke="#333" stroke-width="2"/>
+      `,
+    },
+  ];
+
+  function init() {
+    const root = document.querySelector('[data-colour-picture]');
+    if (!root || root.dataset.init) return;
+    root.dataset.init = '1';
+    bindActivityUnlock(root, 'playful');
+
+    const label = root.querySelector('[data-label]');
+    const paletteEl = root.querySelector('[data-palette]');
+    const svg = root.querySelector('[data-svg]');
+    const canvas = root.querySelector('[data-canvas]');
+    const artWrap = root.querySelector('[data-art-wrap]');
+    const undoBtn = root.querySelector('[data-undo]');
+    const clearBtn = root.querySelector('[data-clear]');
+    const newBtn = root.querySelector('[data-new]');
+    const toolBtns = [...root.querySelectorAll('[data-tool]')];
+
+    const ctx = canvas.getContext('2d');
+    let tool = 'fill';
+    let color = PALETTE[0];
+    let pictureIndex = -1;
+    let drawing = false;
+    let undoStack = [];
+    const MAX_UNDO = 24;
+
+    function setTool(next) {
+      tool = next;
+      toolBtns.forEach((btn) => {
+        const on = btn.dataset.tool === next;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      canvas.style.pointerEvents = tool === 'fill' ? 'none' : 'auto';
+      svg.style.pointerEvents = tool === 'fill' || tool === 'eraser' ? 'auto' : 'none';
+    }
+
+    function snapshot() {
+      const fills = {};
+      svg.querySelectorAll('[data-region]').forEach((node) => {
+        fills[node.getAttribute('data-region')] = node.getAttribute('fill') || '#ffffff';
+      });
+      return {
+        fills,
+        canvas: ctx.getImageData(0, 0, canvas.width, canvas.height),
+      };
+    }
+
+    function pushUndo() {
+      undoStack.push(snapshot());
+      if (undoStack.length > MAX_UNDO) undoStack.shift();
+      undoBtn.disabled = undoStack.length === 0;
+    }
+
+    function restoreState(state) {
+      Object.entries(state.fills).forEach(([id, fill]) => {
+        const node = svg.querySelector(`[data-region="${id}"]`);
+        if (node) node.setAttribute('fill', fill);
+      });
+      ctx.putImageData(state.canvas, 0, 0);
+    }
+
+    function resizeCanvas() {
+      const rect = artWrap.getBoundingClientRect();
+      const size = Math.min(Math.floor(rect.width), 360);
+      canvas.width = size * 2;
+      canvas.height = size * 2;
+      canvas.style.width = `${size}px`;
+      canvas.style.height = `${size}px`;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function resetFills() {
+      svg.querySelectorAll('[data-region]').forEach((node) => {
+        node.setAttribute('fill', '#ffffff');
+      });
+    }
+
+    function loadPicture(index) {
+      const pic = PICTURES[index];
+      if (!pic) return;
+      pictureIndex = index;
+      label.textContent = `${pic.emoji} ${pic.name}`;
+      svg.innerHTML = pic.svg;
+      clearCanvas();
+      undoStack = [];
+      undoBtn.disabled = true;
+
+      svg.querySelectorAll('[data-region]').forEach((node) => {
+        node.style.cursor = 'pointer';
+        node.addEventListener('click', () => onRegionClick(node));
+      });
+    }
+
+    function pickRandomPicture(excludeIndex = -1) {
+      let next = Math.floor(Math.random() * PICTURES.length);
+      if (PICTURES.length > 1) {
+        while (next === excludeIndex) {
+          next = Math.floor(Math.random() * PICTURES.length);
+        }
+      }
+      loadPicture(next);
+    }
+
+    function onRegionClick(node) {
+      if (tool === 'fill') {
+        pushUndo();
+        node.setAttribute('fill', color);
+        audio.playSfx('pop');
+      } else if (tool === 'eraser') {
+        pushUndo();
+        node.setAttribute('fill', '#ffffff');
+        audio.playSfx('tap');
+      }
+    }
+
+    function canvasPos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (evt.clientX - rect.left) * scaleX,
+        y: (evt.clientY - rect.top) * scaleY,
+      };
+    }
+
+    function startDraw(evt) {
+      if (tool !== 'brush' && tool !== 'eraser') return;
+      evt.preventDefault();
+      pushUndo();
+      drawing = true;
+      const { x, y } = canvasPos(evt);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function moveDraw(evt) {
+      if (!drawing) return;
+      evt.preventDefault();
+      const { x, y } = canvasPos(evt);
+      ctx.lineWidth = tool === 'eraser' ? 24 : 12;
+      ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
+      ctx.globalCompositeOperation = tool === 'eraser' ? 'destination-out' : 'source-over';
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function endDraw() {
+      drawing = false;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+
+    PALETTE.forEach((hex, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'swatch';
+      btn.style.background = hex;
+      btn.setAttribute('aria-label', hex === '#ffffff' ? 'White' : `Colour ${i + 1}`);
+      btn.dataset.color = hex;
+      if (hex === '#ffffff') btn.classList.add('swatch--white');
+      if (i === 0) btn.classList.add('is-active');
+      btn.addEventListener('click', () => {
+        color = hex;
+        paletteEl.querySelectorAll('.swatch').forEach((s) => s.classList.remove('is-active'));
+        btn.classList.add('is-active');
+      });
+      paletteEl.appendChild(btn);
+    });
+
+    toolBtns.forEach((btn) => {
+      btn.addEventListener('click', () => setTool(btn.dataset.tool ?? 'fill'));
+    });
+
+    undoBtn.addEventListener('click', () => {
+      const prev = undoStack.pop();
+      if (prev) restoreState(prev);
+      undoBtn.disabled = undoStack.length === 0;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      pushUndo();
+      resetFills();
+      clearCanvas();
+    });
+
+    newBtn.addEventListener('click', () => {
+      pickRandomPicture(pictureIndex);
+      audio.playSfx('match');
+    });
+
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', moveDraw);
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointerleave', endDraw);
+    canvas.addEventListener('pointercancel', endDraw);
+
+    resizeCanvas();
+    setTool('fill');
+    pickRandomPicture();
+    window.addEventListener('resize', resizeCanvas);
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
+
+<style>
+  .colour-game {
+    text-align: center;
+  }
+
+  .picture-label {
+    font-size: 1.35rem;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    margin-bottom: 0.55rem;
+  }
+
+  .tool-btn {
+    border: 2px solid #9775fa;
+    background: #f3f0ff;
+    color: #4a2878;
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .tool-btn.is-active {
+    border-color: #5f3dc4;
+    background: linear-gradient(180deg, #9775fa, #7950f2);
+    color: #fff;
+  }
+
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: center;
+    margin-bottom: 0.55rem;
+  }
+
+  .swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .swatch--white {
+    background: #fff !important;
+  }
+
+  .swatch.is-active {
+    outline: 3px solid #5f3dc4;
+    outline-offset: 2px;
+  }
+
+  .art-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto 0.65rem;
+    aspect-ratio: 1;
+    border: 2px dashed #c4b5fd;
+    border-radius: 12px;
+    background: #fafafa;
+    overflow: hidden;
+  }
+
+  .art-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .art-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    pointer-events: none;
+  }
+
+  [data-undo]:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+</style>

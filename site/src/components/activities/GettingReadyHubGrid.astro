@@ -2,11 +2,15 @@
 import { gettingReadyGames } from '../../data/gettingReadyGames';
 import { gettingReadyHubSections } from '../../data/gettingReadyCategories';
 
+const hubFeaturedGame = gettingReadyGames.find((g) => g.hubFeatured);
+
 function gamesForSection(section: (typeof gettingReadyHubSections)[number]) {
   if (section.category === 'mindPower') {
-    return gettingReadyGames.filter((g) => g.mindPower);
+    return gettingReadyGames.filter((g) => g.mindPower && !g.hubFeatured);
   }
-  return gettingReadyGames.filter((g) => g.category === section.category && !g.mindPower);
+  return gettingReadyGames.filter(
+    (g) => g.category === section.category && !g.mindPower && !g.hubFeatured,
+  );
 }
 ---
 
@@ -14,6 +18,20 @@ function gamesForSection(section: (typeof gettingReadyHubSections)[number]) {
   <p class="gr-intro">
     Brain games for home, outside, travel, paper, NFC tags, and more. Tap a card to play.
   </p>
+
+  {
+    hubFeaturedGame ? (
+      <div class="gr-grid gr-grid--featured">
+        <a
+          class="gr-card gr-card--featured gr-card--hero"
+          href={`/activities/getting-ready/${hubFeaturedGame.slug}/`}
+        >
+          <span class="gr-emoji" aria-hidden="true">{hubFeaturedGame.emoji}</span>
+          <span class="gr-name">{hubFeaturedGame.title}</span>
+        </a>
+      </div>
+    ) : null
+  }
 
   {
     gettingReadyHubSections.map((section) => {
@@ -81,6 +99,20 @@ function gamesForSection(section: (typeof gettingReadyHubSections)[number]) {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.65rem;
     margin-bottom: 0.35rem;
+  }
+
+  .gr-grid--featured {
+    margin-bottom: 1rem;
+  }
+
+  .gr-card--hero {
+    min-height: 6rem;
+    font-size: 1rem;
+    box-shadow: 0 6px 14px rgba(230, 119, 0, 0.22);
+  }
+
+  .gr-card--hero .gr-emoji {
+    font-size: 2.25rem;
   }
 
   .gr-card {
