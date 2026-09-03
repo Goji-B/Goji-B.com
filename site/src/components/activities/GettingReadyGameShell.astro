@@ -10,8 +10,10 @@ const { game } = Astro.props;
 ---
 
 <article class="gr-game-page">
-  <p class="gr-hero-emoji" aria-hidden="true">{game.emoji}</p>
-  <h1>{game.title}</h1>
+  {!game.hideHeroEmoji ? (
+    <p class="gr-hero-emoji" aria-hidden="true">{game.emoji}</p>
+  ) : null}
+  <h1 class:list={[{ 'gr-title-centered': game.hideHeroEmoji }]}>{game.title}</h1>
   <p class="gr-tagline">{game.tagline}</p>
   <p class="gr-howto"><strong>How to play:</strong> {game.howTo}</p>
   <ul class="gr-skills" aria-label="Skills">
@@ -40,6 +42,11 @@ const { game } = Astro.props;
     margin: 0.35rem 0 0.25rem;
     font-size: 1.55rem;
     color: #4a2878;
+  }
+
+  .gr-title-centered {
+    text-align: center;
+    margin-top: 0.15rem;
   }
 
   .gr-tagline {

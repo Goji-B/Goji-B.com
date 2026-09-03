@@ -13,7 +13,6 @@ import GrTreasureHunt from '../../../components/games/getting-ready/GrTreasureHu
 import GrSimonSays from '../../../components/games/getting-ready/GrSimonSays.astro';
 import GrBuildingChallenges from '../../../components/games/getting-ready/GrBuildingChallenges.astro';
 import GrWordChain from '../../../components/games/getting-ready/GrWordChain.astro';
-import GrColourThePicture from '../../../components/games/getting-ready/GrColourThePicture.astro';
 
 export function getStaticPaths() {
   return gettingReadyGames.map((game) => ({ params: { slug: game.slug } }));
@@ -27,7 +26,6 @@ if (!game) {
 }
 
 const customGames: Record<string, typeof GrMemoryCards> = {
-  'colour-the-picture': GrColourThePicture,
   'memory-card-matching': GrMemoryCards,
   'twenty-questions': GrTwentyQuestions,
   'story-building': GrStoryBuilding,

@@ -5,6 +5,7 @@ export interface MainActivity {
 
 export const mainActivities: MainActivity[] = [
   { slug: 'tic-tac-toe', title: 'Tic-Tac-Toe' },
+  { slug: 'colour-the-picture', title: 'Colour the Picture' },
   { slug: 'color-match-tap', title: 'Color Match Tap' },
   { slug: 'animal-memory-cards', title: 'Animal Memory Cards' },
   { slug: 'bubble-pop-abc', title: 'Bubble Pop ABC' },

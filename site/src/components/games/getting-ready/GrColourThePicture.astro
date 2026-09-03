@@ -18,7 +18,7 @@ const PALETTE = [
 ---
 
 <section class="gr-play colour-game" data-colour-picture data-music-theme="playful">
-  <h2>Colour the Picture</h2>
+  <h2 class="game-title">Colour the Picture</h2>
   <p class="gr-msg picture-label" data-label aria-live="polite"></p>
 
   <div class="tool-row" role="toolbar" aria-label="Colouring tools">
@@ -370,8 +370,16 @@ const PALETTE = [
     text-align: center;
   }
 
+  .game-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.55rem;
+    color: #4a2878;
+    text-align: center;
+  }
+
   .picture-label {
     font-size: 1.35rem;
+    margin-top: 0.15rem;
   }
 
   .tool-row {

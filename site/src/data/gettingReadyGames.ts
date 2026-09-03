@@ -30,21 +30,12 @@ export interface GettingReadyGame {
   mindPower?: boolean;
   /** Shown as the first card on the Getting Ready hub (excluded from section grids). */
   hubFeatured?: boolean;
+  /** Hide the large emoji above the page title. */
+  hideHeroEmoji?: boolean;
   musicTheme: MusicTheme;
 }
 
 const coreGettingReadyGames: GettingReadyGame[] = [
-  {
-    slug: 'colour-the-picture',
-    title: 'Colour the Picture',
-    emoji: '🎨',
-    tagline: 'Pick a picture, choose colours, and fill it in.',
-    howTo: 'Tap a colour and a tool. Fill big areas with the bucket, draw with the brush, or rub out with the eraser. Tap New picture for another outline.',
-    skills: ['Creativity', 'Fine motor', 'Colours', 'Focus'],
-    category: 'creativity',
-    hubFeatured: true,
-    musicTheme: 'playful',
-  },
   {
     slug: 'memory-card-matching',
     title: 'Memory Card Matching',

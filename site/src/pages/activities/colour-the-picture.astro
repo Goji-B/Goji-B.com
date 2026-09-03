@@ -1,0 +1,12 @@
+---
+import ActivityLayout from '../../layouts/ActivityLayout.astro';
+import GrColourThePicture from '../../components/games/getting-ready/GrColourThePicture.astro';
+import ActivityFeedbackBlob from '../../components/activities/ActivityFeedbackBlob.astro';
+import BackToActivities from '../../components/activities/BackToActivities.astro';
+---
+
+<ActivityLayout title="Colour the Picture Activity">
+  <GrColourThePicture />
+  <ActivityFeedbackBlob slug="colour-the-picture" hub="main" title="Colour the Picture" />
+  <BackToActivities />
+</ActivityLayout>

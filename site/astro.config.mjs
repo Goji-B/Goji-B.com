@@ -35,6 +35,7 @@ export default defineConfig({
 						{ label: 'Activities Home', link: '/activities/' },
 						{ label: 'Activities — Getting Ready', link: '/activities/getting-ready/' },
 						{ label: 'Tic-Tac-Toe Activity', link: '/activities/tic-tac-toe/' },
+						{ label: 'Colour the Picture Activity', link: '/activities/colour-the-picture/' },
 						{ label: 'Color Match Tap Activity', link: '/activities/color-match-tap/' },
 						{ label: 'Animal Memory Cards Activity', link: '/activities/animal-memory-cards/' },
 						{ label: 'Bubble Pop ABC Activity', link: '/activities/bubble-pop-abc/' },
